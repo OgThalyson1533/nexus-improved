@@ -110,6 +110,8 @@ function runPlanImproved() {
   const destSel = typeof getMultiSel === 'function' ? getMultiSel('pDest') : [];
   const tipoSel = typeof getMultiSel === 'function' ? getMultiSel('pTipo') : [];
   const hasDestino = destSel.length > 0;
+  
+  const fExecType = document.getElementById('pExecType') ? document.getElementById('pExecType').value : 'ideal';
 
   const pesoMax = +v('pPeso', 15000) || 15000;
   const valorMax = +v('pValor', 5000000) || 5000000;
@@ -245,9 +247,10 @@ function runPlanImproved() {
           tipo: tipoSel.includes('Entrega') ? 'Entrega' : 'Outro',
           allowNoPrazo: true,
           allowSemData: true,
-          allowPalletBreaking: true,
-          requireValidWeight: false,  // Validação feita no nível CTRC — não re-filtrar por linha
-          requireValidValue: false    // Validação feita no nível CTRC — não re-filtrar por linha
+          // v8.4: pallet breaking removido — integridade atômica garantida pelo engine
+          requireValidWeight: false,
+          requireValidValue: false,
+          execType: fExecType
         }
       );
 
@@ -266,17 +269,17 @@ function runPlanImproved() {
         rejeitados: planResults.filter(r => r.flag === 0).length
       });
 
-      // Atualizar estatísticas na UI
+      // ── Atualizar estatísticas na UI ─────────────────────────────
       const metrics = result.metrics;
 
-      setText('psSel', metrics.totalSelected);
-      setText('psNSel', metrics.totalRejected);
-      setText('psPeso', fmtNum(metrics.totalWeight, 1) + ' kg');
+      setText('psSel',   metrics.totalSelected);
+      setText('psNSel',  metrics.totalRejected);
+      setText('psPeso',  fmtNum(metrics.totalWeight, 1) + ' kg');
       setText('psValor', fmtMoeda(metrics.totalValue));
-      setText('psVol', fmtNum(metrics.totalVolumes));
+      setText('psVol',   fmtNum(metrics.totalVolumes));
 
       const weightPct = metrics.weightUtilization;
-      const valuePct = metrics.valueUtilization;
+      const valuePct  = metrics.valueUtilization;
 
       setText('mPV', fmtNum(metrics.totalWeight, 1) + ' / ' + fmtNum(pesoMax, 1) + ' kg (' + weightPct.toFixed(1) + '%)');
       setText('mVV', fmtMoeda(metrics.totalValue) + ' / ' + fmtMoeda(valorMax) + ' (' + valuePct.toFixed(1) + '%)');
@@ -284,13 +287,16 @@ function runPlanImproved() {
       setText('mVP', valuePct.toFixed(1) + '%');
 
       try {
-        document.getElementById('mPF').style.width = weightPct + '%';
-        document.getElementById('mVF').style.width = valuePct + '%';
+        document.getElementById('mPF').style.width = Math.min(weightPct, 100) + '%';
+        document.getElementById('mVF').style.width = Math.min(valuePct,  100) + '%';
       } catch (_) { }
 
-      setText('planCapPeso', fmtNum(pesoMax, 1));
+      setText('planCapPeso',  fmtNum(pesoMax, 1));
       setText('planCapValor', fmtMoeda(valorMax));
-      setText('planVeic', veiculo || '-');
+      setText('planVeic',     veiculo || '-');
+
+      // ── Badge de Cenário e Optimization Score (v8.4) ─────────────
+      _renderPlanningIntelligence(metrics, result);
 
       hideLoad();
 
@@ -310,58 +316,74 @@ function runPlanImproved() {
         filial,
         destino: destSel.length > 0 ? destSel.join(', ') : 'Todos',
         pool: pool.length,
-        sel: metrics.totalSelected,
-        nsel: metrics.totalRejected,
-        forcedSel: metrics.criticalSelected + metrics.scheduledSelected,
-        forcedNsel: metrics.criticalRejected + metrics.scheduledRejected,
-        normalSel: metrics.totalSelected - (metrics.criticalSelected + metrics.scheduledSelected),
-        peso: metrics.totalWeight,
+        sel:       metrics.totalSelected,
+        nsel:      metrics.totalRejected,
+        forcedSel:  metrics.criticalSelected  + metrics.scheduledSelected,
+        forcedNsel: metrics.criticalRejected  + metrics.scheduledRejected,
+        normalSel:  metrics.totalSelected - (metrics.criticalSelected + metrics.scheduledSelected),
+        peso:  metrics.totalWeight,
         valor: metrics.totalValue,
-        veiculo
+        veiculo,
+        // v8.4 extras
+        scenarioRecommendation: metrics.scenarioRecommendation,
+        optimizationScore:      metrics.optimizationScore
       });
 
-      // Toast com resultado
-      const type = (metrics.criticalRejected > 0 || metrics.scheduledRejected > 0) ? 'warn' : 'ok';
-      let message = fmtNum(metrics.totalSelected) + ' selecionados';
+      // ── Toast com resultado enriquecido ─────────────────────────
+      const toastType = (metrics.criticalRejected > 0 || metrics.scheduledRejected > 0) ? 'warn' : 'ok';
+      const scoreColor = metrics.optimizationScore >= 80 ? '🟢' : metrics.optimizationScore >= 55 ? '🟡' : '🔴';
+      const toastMsg = [
+        fmtNum(metrics.totalSelected) + ' embarcados',
+        `${scoreColor} Score ${metrics.optimizationScore}/100`,
+        `Cenário: ${metrics.scenarioRecommendation}`
+      ].join(' · ');
 
-      if (metrics.warnings.length > 0) {
-        message += ' · ' + metrics.warnings.length + ' avisos';
-      }
+      toast('Planejamento concluído', toastMsg, toastType);
 
-      toast('Planejamento concluído', message, type);
-
-      // Avisos importantes
-      if (metrics.warnings.length > 0) {
-        console.warn('[Planejamento] Avisos:', metrics.warnings);
-
-        // Mostrar aviso se capacidade excedida
-        if (weightPct > 100 || valuePct > 100) {
+      // ── Avisos ──────────────────────────────────────────────────
+      if (metrics.warnings && metrics.warnings.length > 0) {
+        console.warn('[Planejamento v8.4] Avisos:', metrics.warnings);
+        if (weightPct > 105 || valuePct > 105) {
           setTimeout(() => {
             const parts = [];
-            if (weightPct > 100) {
-              parts.push(`Peso: +${fmtNum(metrics.totalWeight - pesoMax, 1)} kg`);
-            }
-            if (valuePct > 100) {
-              parts.push(`Valor: +${fmtMoeda(metrics.totalValue - valorMax)}`);
-            }
-            toast(
-              '⚠ Capacidade excedida',
-              `Itens críticos/agendados excedem limites. ${parts.join(' | ')}`,
-              'warn'
-            );
-          }, 500);
+            if (weightPct > 105) parts.push(`Peso: +${fmtNum(metrics.totalWeight - pesoMax, 1)} kg`);
+            if (valuePct  > 105) parts.push(`Valor: +${fmtMoeda(metrics.totalValue  - valorMax)}`);
+            toast('⚠ Capacidade excedida', `Cargas prioritárias excedem limite. ${parts.join(' | ')}`, 'warn');
+          }, 600);
         }
       }
 
-      console.log('[Planejamento] Executado com sucesso:', {
-        tempo: result.executionTimeMs + 'ms',
-        pool: pool.length,
-        selecionados: metrics.totalSelected,
-        rejeitados: metrics.totalRejected,
-        sla: metrics.slaPercent.toFixed(1) + '%',
-        ocupacaoPeso: weightPct.toFixed(1) + '%',
-        ocupacaoValor: valuePct.toFixed(1) + '%'
+      // ── Log detalhado no console ─────────────────────────────────
+      console.log('[Planejamento v8.4] Executado com sucesso:', {
+        tempo:         result.executionTimeMs + 'ms',
+        cenário:       metrics.scenarioRecommendation,
+        scoreOtimizacao: metrics.optimizationScore + '/100',
+        pool:          pool.length,
+        selecionados:  metrics.totalSelected,
+        rejeitados:    metrics.totalRejected,
+        críticos_ok:   metrics.criticalSelected,
+        críticos_rej:  metrics.criticalRejected,
+        sla:           metrics.slaPercent?.toFixed(1) + '%',
+        ocupacaoPeso:  weightPct.toFixed(1) + '%',
+        ocupacaoValor: valuePct.toFixed(1)  + '%',
+        cenáriosAlternativos: metrics.alternativeScenarios
       });
+
+      // Projeção de SLA (log)
+      try {
+        const calc = new SLACalculator();
+        const slaImpact = calc.projectSLAImpact(result.selected, poolValid);
+        console.log('[Planejamento v8.4] Impacto no SLA global:', slaImpact);
+        if (slaImpact.ganho >= 3) {
+          setTimeout(() => {
+            toast(
+              '📈 Impacto no SLA',
+              slaImpact.interpretation + ` (${slaImpact.atrasadosRemovidos} atrasados removidos)`,
+              'ok'
+            );
+          }, 1200);
+        }
+      } catch (_) { }
 
     } catch (e) {
       hideLoad();
@@ -379,13 +401,79 @@ function runPlanImproved() {
 window.runPlan = function () {
   // Detectar se PlanningEngine está disponível
   if (typeof PlanningEngine !== 'undefined' && window.planningEngine) {
-    console.log('[NEXUS] Usando Planning Engine aprimorado v8.3');
+    console.log('[NEXUS] Usando Planning Engine aprimorado v8.4');
     return runPlanImproved();
   } else {
     console.warn('[NEXUS] Planning Engine não disponível, usando versão original');
     return window._originalRunPlan ? window._originalRunPlan() : null;
   }
 };
+
+// ────────────────────────────────────────────────────────────────
+// INTELLIGENCE UI (v8.4)
+// ────────────────────────────────────────────────────────────────
+function _renderPlanningIntelligence(metrics, result) {
+  try {
+    let container = document.getElementById('planIntelligencePanel');
+    
+    // Se não existir, criar e injetar na área de estatísticas
+    if (!container) {
+      const statsPanel = document.querySelector('.stats-panel');
+      if (statsPanel) {
+        container = document.createElement('div');
+        container.id = 'planIntelligencePanel';
+        container.className = 'intelligence-panel';
+        container.style.marginTop = '15px';
+        container.style.padding = '12px';
+        container.style.background = 'rgba(16, 163, 127, 0.1)';
+        container.style.border = '1px solid rgba(16, 163, 127, 0.2)';
+        container.style.borderRadius = '8px';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.gap = '8px';
+        statsPanel.parentNode.insertBefore(container, statsPanel.nextSibling);
+      }
+    }
+
+    if (container) {
+      const colors = {
+        'Balanceado': '#10a37f',
+        'Prioridade Urgência': '#ef4444',
+        'Prioridade Eficiência': '#f59e0b'
+      };
+      
+      const badgeColor = colors[metrics.scenarioRecommendation] || '#10a37f';
+      const optScore = metrics.optimizationScore;
+      let scoreLabel = 'Excelente';
+      if (optScore < 80) scoreLabel = 'Bom';
+      if (optScore < 55) scoreLabel = 'Razoável';
+      if (optScore < 30) scoreLabel = 'Baixo';
+      
+      let html = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="color: var(--text-color, #e5e5e5); font-size: 14px;">🧠 Inteligência de Embarque</strong>
+          <span style="background: ${badgeColor}20; color: ${badgeColor}; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; border: 1px solid ${badgeColor}40;">
+            Cenário: ${metrics.scenarioRecommendation}
+          </span>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px;">
+            <span>Optimization Score</span>
+            <span style="font-weight: bold;">${optScore}/100 (${scoreLabel})</span>
+          </div>
+          <div style="width: 100%; background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; overflow: hidden;">
+            <div style="width: ${optScore}%; background: ${badgeColor}; height: 100%; transition: width 0.5s ease;"></div>
+          </div>
+        </div>
+      `;
+      
+      container.innerHTML = html;
+    }
+  } catch (e) {
+    console.warn('[NEXUS] Erro ao renderizar inteligência de planejamento:', e);
+  }
+}
 
 // ────────────────────────────────────────────────────────────────
 // INTEGRAR FILTROS GLOBAIS (se disponível)
@@ -412,18 +500,18 @@ if (typeof GlobalFilters !== 'undefined' && window.globalFilters) {
 // ────────────────────────────────────────────────────────────────
 
 console.log('%c╔══════════════════════════════════════════════════════════════╗', 'color: #10a37f');
-console.log('%c║  NEXUS HUB v8.3 IMPROVED                                     ║', 'color: #10a37f; font-weight: bold');
+console.log('%c║  NEXUS HUB v8.4 INTELLIGENT PLANNER                          ║', 'color: #10a37f; font-weight: bold');
 console.log('%c╠══════════════════════════════════════════════════════════════╣', 'color: #10a37f');
 console.log('%c║  Módulos Carregados:                                         ║', 'color: #10a37f');
-console.log('%c║  ✓ SLA Calculator (Centralizado)                             ║', 'color: #10a37f');
+console.log('%c║  ✓ SLA Calculator (Urgency Score + Scenario Eval)            ║', 'color: #10a37f');
 console.log('%c║  ✓ Global Filters (Sincronizado)                             ║', 'color: #10a37f');
-console.log('%c║  ✓ Planning Engine (Otimizado)                               ║', 'color: #10a37f');
+console.log('%c║  ✓ Planning Engine (Multi-Scenario + Atomic Pallets)         ║', 'color: #10a37f');
 console.log('%c║                                                              ║', 'color: #10a37f');
-console.log('%c║  Correções Aplicadas:                                        ║', 'color: #10a37f');
-console.log('%c║  • Demo mode removido                                        ║', 'color: #10a37f');
-console.log('%c║  • Cálculo de SLA unificado                                  ║', 'color: #10a37f');
-console.log('%c║  • Algoritmo de planejamento aprimorado                      ║', 'color: #10a37f');
-console.log('%c║  • Filtros sincronizados entre telas                         ║', 'color: #10a37f');
+console.log('%c║  Inovações v8.4:                                             ║', 'color: #10a37f');
+console.log('%c║  • Algoritmo bin-packing com preenchimento residual          ║', 'color: #10a37f');
+console.log('%c║  • Pallets 100% atômicos (sem perda de integridade)          ║', 'color: #10a37f');
+console.log('%c║  • Score de Otimização (0-100)                               ║', 'color: #10a37f');
+console.log('%c║  • Análise automática de 3 cenários de transporte            ║', 'color: #10a37f');
 console.log('%c╚══════════════════════════════════════════════════════════════╝', 'color: #10a37f');
 
 // ────────────────────────────────────────────────────────────────

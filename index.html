@@ -155,6 +155,248 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="js/filter-multiselect.js"></script>
+  <script src="js/login.js"></script>
+  
+  <!-- CSS Date Range Slicer -->
+  <style>
+  /* ── NOVO Date Range Slicer (Compacto sem Presets) ── */
+  .nx-filter-dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  .nx-filter-trigger {
+    display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 5px 10px; 
+    border: 1px solid var(--wire2, #2e3148); border-radius: 6px; 
+    background: var(--ink3, #1e2030); color: var(--text, #f0f2ff); 
+    height: 28px; cursor: pointer; transition: border-color .15s;
+    user-select: none;
+  }
+  .nx-filter-trigger:hover { border-color: var(--accent, #10a37f); }
+  .nx-filter-panel {
+    position: absolute; top: calc(100% + 6px); left: 0;
+    display: none; z-index: 10000;
+    box-shadow: 0 10px 36px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.35);
+    border-radius: 6px;
+  }
+  .nx-filter-panel.is-open { display: block; animation: nxDropIn .15s ease-out; }
+  
+  .nx-picker {
+    position: relative;
+    width: 200px; /* Reduced width */
+    background: var(--ink3, #1e2030);
+    border: 1px solid var(--wire2, #2e3148);
+    border-radius: 6px;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    --accent: #10a37f;
+    --accent-dim: rgba(16,163,127,0.15);
+    --accent-range: rgba(16,163,127,0.10);
+    --text: #f0f2ff;
+    --text2: #8b93b0;
+    --text3: #454d6a;
+    --today: #ff6b6b;
+    z-index: 1000;
+  }
+  .nx-picker-btn {
+    display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 5px 10px; border: 1px solid var(--wire2); border-radius: 6px; background: var(--ink3); color: var(--tx); transition: border-color .15s; height: 28px; cursor: pointer;
+  }
+  .nx-picker-btn:hover { border-color: var(--accent); }
+  .nxp-fields { padding: 8px 8px 0; display: flex; gap: 4px; align-items: center; } /* Reduced padding/gap */
+  .nxp-field { flex: 1; min-width: 0; }
+  .nxp-label { font-size: 9px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--text3); margin-bottom: 2px; }
+  .nxp-fbtn { width: 100%; display: flex; align-items: center; gap: 4px; padding: 5px 6px; background: var(--ink, #161820); border: 1px solid var(--wire2); border-radius: 6px; cursor: pointer; transition: border-color .15s, box-shadow .15s; font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500; color: var(--text); }
+  .nxp-fbtn:hover { border-color: var(--text2); }
+  .nxp-fbtn.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
+  .nxp-fbtn.empty { color: var(--text3); font-family: 'DM Sans', sans-serif; }
+  .nxp-fbtn svg { color: var(--text3); flex-shrink: 0; width: 10px; height: 10px; }
+  .nxp-fbtn.active svg { color: var(--accent); }
+  .nxp-arrow { color: var(--text3); font-size: 10px; padding-top: 10px; flex-shrink: 0; }
+  
+  .nxp-div { height: 1px; background: var(--wire2); margin: 6px 8px 0; }
+  .nxp-cal { padding: 8px; display: none; }
+  .nxp-cal.show { display: block; }
+  .nxp-hint { text-align: center; font-size: 9px; font-weight: 600; color: var(--accent); letter-spacing: .05em; margin-bottom: 8px; }
+  .nxp-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .nxp-navbtn { width: 22px; height: 22px; background: none; border: 1px solid var(--wire2); border-radius: 4px; color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+  .nxp-navbtn:hover { border-color: var(--accent); color: var(--accent); }
+  .nxp-title { font-size: 11px; font-weight: 600; color: var(--text); display: flex; gap: 4px; }
+  .nxp-title span { padding: 2px 4px; border-radius: 4px; cursor: pointer; transition: background .15s, color .15s; }
+  .nxp-title span:hover { background: var(--accent-dim); color: var(--accent); }
+  .nxp-wds { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 2px; }
+  .nxp-wds div { text-align: center; font-size: 8.5px; font-weight: 600; letter-spacing: .05em; color: var(--text3); padding: 2px 0; }
+  .nxp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
+  .nxp-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; color: var(--text); border-radius: 4px; cursor: pointer; border: 1.5px solid transparent; transition: background .1s, color .1s; position: relative; user-select: none; }
+  .nxp-day:hover { background: var(--accent-dim); color: var(--accent); }
+  .nxp-day.out { color: var(--text3); pointer-events: none; opacity: .4; }
+  .nxp-day.today { border-color: var(--today); color: var(--today); }
+  .nxp-day.today:hover { background: rgba(255,107,107,.12); }
+  .nxp-day.start { background: var(--accent) !important; color: #fff !important; border-color: transparent !important; border-radius: 4px 0 0 4px; font-weight: 700; }
+  .nxp-day.end { background: var(--accent) !important; color: #fff !important; border-color: transparent !important; border-radius: 0 4px 4px 0; font-weight: 700; }
+  .nxp-day.start.end { border-radius: 4px !important; }
+  .nxp-day.inrange { background: var(--accent-range); color: #a0b4ff; border-radius: 0; border-color: transparent; }
+  .nxp-panel { display: none; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 8px; }
+  .nxp-panel.years { grid-template-columns: repeat(4, 1fr); }
+  .nxp-panel.show { display: grid; }
+  .nxp-pitem { padding: 6px 4px; text-align: center; font-size: 10px; font-weight: 500; border-radius: 4px; cursor: pointer; color: var(--text); border: 1px solid transparent; transition: all .15s; }
+  .nxp-pitem:hover { background: var(--accent-dim); color: var(--accent); }
+  .nxp-pitem.current { border-color: var(--wire2); }
+  .nxp-pitem.selected { background: var(--accent); color: #fff; border-color: transparent; }
+  .nxp-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--wire2); }
+  .nxp-finfo { font-size: 9px; color: var(--text2); }
+  .nxp-finfo b { color: var(--accent); font-weight: 600; }
+  .nxp-btn { font-family: inherit; font-size: 9px; font-weight: 600; padding: 4px 10px; border-radius: 4px; cursor: pointer; border: 1px solid var(--wire2); background: none; color: var(--text2); transition: all .15s; }
+  .nxp-btn:hover { border-color: var(--text2); color: var(--text); }
+  .nxp-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .nxp-btn.primary:hover { background: #0d8f6f; }
+
+  /* ── Calendar dropdown ── */
+  .nx-cal-drop {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 99999;
+    display: none;
+    background: var(--ink2, #1a1c2a);
+    border: 1px solid var(--wire2, #2e3148);
+    border-radius: 10px;
+    box-shadow: 0 10px 36px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.35);
+    padding: 12px;
+    font-family: inherit;
+    gap: 10px;
+  }
+  .nx-cal-drop.is-open {
+    display: flex;
+    animation: nxDropIn .13s cubic-bezier(.4,0,.2,1);
+  }
+  .nx-cal-drop.align-r { left: auto; right: 0; }
+  @keyframes nxDropIn {
+    from { opacity:0; transform:translateY(-5px) scale(.98); }
+    to   { opacity:1; transform:translateY(0)   scale(1);   }
+  }
+  .nx-cal-sep {
+    width: 1px;
+    background: var(--wire2, #2e3148);
+    align-self: stretch;
+    margin: 4px 0;
+  }
+
+  /* ── Individual calendar ── */
+  .nx-cal {
+    width: 218px;
+  }
+  .nx-c-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .nx-c-nav-btn {
+    width: 24px; height: 24px;
+    border-radius: 5px;
+    border: 1px solid var(--wire2, #2e3148);
+    background: transparent;
+    color: var(--muted, #6b7280);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+    font-size: 11px;
+  }
+  .nx-c-nav-btn:hover { background: var(--ink3, #1e2030); border-color: var(--em, #10a37f); color: var(--em, #10a37f); }
+  .nx-c-nav-title {
+    display: flex;
+    gap: 2px;
+  }
+  .nx-c-nav-m, .nx-c-nav-y {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--txt, #f0f2ff);
+    padding: 3px 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .nx-c-nav-m:hover, .nx-c-nav-y:hover { background: rgba(16,163,127,.12); color: var(--em, #10a37f); }
+  .nx-c-wds {
+    display: grid;
+    grid-template-columns: repeat(7,1fr);
+    margin-bottom: 3px;
+  }
+  .nx-c-wd {
+    text-align: center;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--muted2, #454d6a);
+    padding: 2px 0;
+  }
+  .nx-c-grid { display: grid; grid-template-columns: repeat(7,1fr); }
+  .nx-c-cell {
+    aspect-ratio: 1;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--txt, #f0f2ff);
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background .13s, color .13s;
+    user-select: none;
+    position: relative;
+  }
+  .nx-c-cell:hover:not(.nx-other):not(.nx-dis) { background: var(--ink3, #1e2030); color: var(--em, #10a37f); }
+  .nx-c-cell.nx-other { color: var(--muted2, #454d6a); font-weight: 400; }
+  .nx-c-cell.nx-dis   { color: var(--muted2, #454d6a); opacity:.35; cursor:not-allowed; }
+  .nx-c-cell.nx-today { border-color: var(--em, #10a37f); color: var(--em, #10a37f); }
+  .nx-c-cell.nx-edge  {
+    background: var(--em, #10a37f) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+    font-weight: 700;
+    z-index: 1;
+  }
+  .nx-c-cell.nx-rs { border-radius: 4px 0 0 4px; }
+  .nx-c-cell.nx-re { border-radius: 0 4px 4px 0; }
+  .nx-c-cell.nx-rs.nx-re { border-radius: 4px; }
+  .nx-c-cell.nx-in {
+    background: rgba(16,163,127,.14);
+    border-radius: 0;
+    color: var(--em, #10a37f);
+    border-color: transparent;
+  }
+
+  /* Month/Year panels */
+  .nx-c-pnl { display:none; gap:4px; padding:2px 0; }
+  .nx-c-pnl.on { display:grid; }
+  .nx-c-pnl--m { grid-template-columns:repeat(3,1fr); }
+  .nx-c-pnl--y { grid-template-columns:repeat(4,1fr); }
+  .nx-c-pi {
+    padding:5px 2px; text-align:center;
+    font-size:10.5px; font-weight:500;
+    border-radius:4px; cursor:pointer;
+    color:var(--txt, #f0f2ff); border:1px solid transparent;
+    transition:all .13s;
+  }
+  .nx-c-pi:hover { background:var(--ink3,#1e2030); color:var(--em,#10a37f); }
+  .nx-c-pi.nx-cur { border-color:var(--em,#10a37f); color:var(--em,#10a37f); }
+  .nx-c-pi.nx-sel { background:var(--em,#10a37f); color:#fff; }
+
+  /* Footer */
+  .nx-c-foot {
+    display:flex; justify-content:flex-end; gap:5px;
+    margin-top:10px; padding-top:8px;
+    border-top:1px solid var(--wire2,#2e3148);
+    grid-column:1/-1;
+  }
+  .nx-c-btn {
+    font-family:inherit; font-size:11px; font-weight:600;
+    padding:5px 12px; border-radius:4px; cursor:pointer;
+    border:1px solid transparent; transition:all .13s;
+  }
+  .nx-c-btn-g { background:transparent; color:var(--muted,#8b93b0); border-color:var(--wire2,#2e3148); }
+  .nx-c-btn-g:hover { border-color:var(--txt,#f0f2ff); color:var(--txt,#f0f2ff); }
+  .nx-c-btn-ok { background:var(--em,#10a37f); color:#fff; }
+  .nx-c-btn-ok:hover { background:#0d8f6f; }
+  </style>
 
 </head>
 
@@ -353,6 +595,154 @@
     </div>
   </div>
 
+  <!-- ════════════ LOGIN SCREEN (Premium v2) ════════════ -->
+  <div id="loginScreen" role="dialog" aria-modal="true" aria-label="Tela de autenticação Nexus Hub">
+    <!-- Animated background particles -->
+    <div class="lx-particles" aria-hidden="true">
+      <div class="lx-particle"></div><div class="lx-particle"></div><div class="lx-particle"></div>
+      <div class="lx-particle"></div><div class="lx-particle"></div><div class="lx-particle"></div>
+    </div>
+
+    <!-- Split layout: Left panel (branding) + Right panel (form) -->
+    <div class="lx-shell">
+
+      <!-- LEFT: Brand Panel -->
+      <div class="lx-brand" aria-hidden="true">
+        <div class="lx-brand-grid"></div>
+        <div class="lx-brand-content">
+          <!-- Logo -->
+          <div class="lx-logo">
+            <div class="lx-logo-box">
+              <span class="lx-logo-text">NX</span>
+              <div class="lx-logo-ring"></div>
+            </div>
+            <div class="lx-logo-name">
+              <div class="lx-brand-name">NEXUS HUB</div>
+              <div class="lx-brand-sub">v8.3 · Improved Edition</div>
+            </div>
+          </div>
+
+          <!-- Feature bullets -->
+          <div class="lx-features">
+            <div class="lx-feature">
+              <span class="lx-feat-ic">◈</span>
+              <span>Gestão operacional integrada em tempo real</span>
+            </div>
+            <div class="lx-feature">
+              <span class="lx-feat-ic">◈</span>
+              <span>Motor de planejamento logístico inteligente</span>
+            </div>
+            <div class="lx-feature">
+              <span class="lx-feat-ic">◈</span>
+              <span>SLA preditivo e rastreamento de KPIs</span>
+            </div>
+            <div class="lx-feature">
+              <span class="lx-feat-ic">◈</span>
+              <span>Dashboard com 23+ métricas operacionais</span>
+            </div>
+          </div>
+
+          <!-- Security badge -->
+          <div class="lx-security-badge">
+            <span class="lx-sec-dot"></span>
+            <span>Sessão criptografada · AES-GCM · Acesso restrito</span>
+          </div>
+        </div>
+
+        <!-- Decorative glow orb on left panel -->
+        <div class="lx-orb-brand"></div>
+      </div>
+
+      <!-- RIGHT: Auth Form Panel -->
+      <div class="lx-form-panel">
+        <div class="lx-form-wrap">
+
+          <!-- Mobile logo (hidden on desktop) -->
+          <div class="lx-mobile-logo">
+            <div class="lx-logo-box-sm">NX</div>
+            <div class="lx-brand-name-sm">NEXUS HUB</div>
+          </div>
+
+          <!-- Header -->
+          <div class="lx-form-header">
+            <div class="lx-form-eyebrow">AUTENTICAÇÃO DE ACESSO</div>
+            <h1 class="lx-form-title">Bem-vindo de volta</h1>
+            <p class="lx-form-desc">Insira suas credenciais para acessar o hub operacional.</p>
+          </div>
+
+          <!-- Form -->
+          <form id="loginForm" onsubmit="handleLogin(event)" novalidate autocomplete="on">
+            <div class="lx-field-group">
+              <label for="loginUser" class="lx-label">
+                <span class="lx-label-ic" aria-hidden="true">◉</span>
+                Login de acesso
+              </label>
+              <div class="lx-input-wrap">
+                <input
+                  type="text"
+                  id="loginUser"
+                  name="username"
+                  class="lx-input"
+                  placeholder="usuario@empresa"
+                  required
+                  autocomplete="username"
+                  spellcheck="false"
+                  aria-required="true"
+                  aria-describedby="loginError"
+                >
+                <div class="lx-input-focus-line"></div>
+              </div>
+            </div>
+
+            <div class="lx-field-group">
+              <label for="loginPass" class="lx-label">
+                <span class="lx-label-ic" aria-hidden="true">◉</span>
+                Senha
+              </label>
+              <div class="lx-input-wrap lx-pass-wrap">
+                <input
+                  type="password"
+                  id="loginPass"
+                  name="password"
+                  class="lx-input"
+                  placeholder="••••••••"
+                  required
+                  autocomplete="current-password"
+                  aria-required="true"
+                  aria-describedby="loginError"
+                >
+                <button type="button" class="lx-eye-btn" onclick="toggleLoginPass(this)" aria-label="Mostrar/ocultar senha" tabindex="-1">
+                  <span class="lx-eye-ic">👁</span>
+                </button>
+                <div class="lx-input-focus-line"></div>
+              </div>
+            </div>
+
+            <!-- Error message -->
+            <div id="loginError" class="lx-error" role="alert" aria-live="polite" style="display:none;">
+              <span class="lx-err-ic" aria-hidden="true">⚠</span>
+              <span id="loginErrorText">Credenciais inválidas. Tente novamente.</span>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" id="loginSubmitBtn" class="lx-submit-btn">
+              <span class="lx-btn-label">ACESSAR O HUB</span>
+              <span class="lx-btn-arrow">→</span>
+              <div class="lx-btn-shimmer"></div>
+            </button>
+          </form>
+
+          <!-- Footer -->
+          <div class="lx-form-footer">
+            <span class="lx-footer-dot"></span>
+            <span>NEXUS HUB · Acesso protegido por sessão</span>
+            <span class="lx-footer-dot"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ════════════ IMPORT SCREEN ════════════ -->
   <div id="importScreen">
     <div class="import-wrap">
@@ -466,6 +856,10 @@
         <button class="sb-item" data-page="descarga" onclick="goPage('descarga');toggleSidebar(false)">
           <span class="sb-ic">⬡</span><span class="sb-txt">DESCARGA</span><span class="sb-pill warn"
             id="sbDesc">—</span>
+        </button>
+        <button class="sb-item" data-page="planejado" onclick="goPage('planejado');toggleSidebar(false)">
+          <span class="sb-ic">⚡</span><span class="sb-txt">PLANEJADO</span><span class="sb-pill primary"
+            id="sbPlanj">—</span>
         </button>
         <button class="sb-item" data-page="patio" onclick="goPage('patio');toggleSidebar(false)">
           <span class="sb-ic">⬡</span><span class="sb-txt">PÁTIO</span><span class="sb-pill info" id="sbPat">—</span>
@@ -588,6 +982,12 @@
           <span class="nav-icon">⬡</span>
           <span class="nav-label">Descarga</span>
           <span class="nb nb-o" id="nDesc">—</span>
+        </button>
+        <button type="button" class="nav-item" data-page="planejado" onclick="goPage('planejado',this)"
+          title="Planejado - Visão consolidada de veículos planejados">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-label">Planejado</span>
+          <span class="nb nb-bb" id="nPlanj">—</span>
         </button>
         <button type="button" class="nav-item" data-page="patio" onclick="goPage('patio',this)"
           title="Pátio - Veículos no pátio aguardando operação">
@@ -1045,6 +1445,9 @@
             <div id="estFilialSelect"></div>
             <div id="estDestSelect"></div>
             <div id="estPrazoSelect"></div>
+            <!-- Date Range Slicers (Dropdown Fiel) -->
+            <div id="nx-slicer-est-prev" style="margin-left:auto"></div>
+            <div id="nx-slicer-est-entrega"></div>
           </div>
           <div style="display:flex;gap:7px;align-items:center">
             <input class="srch" type="text" id="estSrch" placeholder="🔍 CTRC, destinatário, cidade..."
@@ -1074,6 +1477,7 @@
           <div id="descPrazoSelect"></div>
           <div id="descRiscoSelect"></div>
           <button class="btn-xs" onclick="exportDescPDF()" style="margin-left:auto;">⎙ PDF Manifesto</button>
+          <button class="btn-xs" onclick="printReport('descarga')">⎙ PDF Fila</button>
         </div>
         <!-- Two-column grid 4/8 -->
         <div class="desc-two-col">
@@ -1101,6 +1505,40 @@
             </div>
             <div id="descDetailEmpty" style="padding:24px;color:var(--muted);text-align:center;font-size:12px">
               👈 Selecione um grupo à esquerda para ver os CT-es
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── PLANEJADO (NOVO) ─── -->
+      <div class="pg" id="pg-planejado">
+        <div class="desc-toolbar"
+          style="flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:8px 12px;">
+          <!-- Empty toolbar for now or future filters -->
+        </div>
+        <div class="desc-two-col">
+          <div class="desc-left-panel">
+            <div class="desc-panel-hdr">
+              <div class="desc-panel-title">VEÍCULOS PLANEJADOS</div>
+              <div class="desc-panel-sub" id="planjCnt">Análise de carregamento por veículo</div>
+            </div>
+            <div class="desc-card-list" id="planjCardList"></div>
+          </div>
+          <div class="desc-right-panel">
+            <div class="desc-panel-hdr">
+              <div class="desc-panel-title" id="planjDetailTitle">SELECIONE UM VEÍCULO</div>
+              <div class="desc-panel-sub" id="planjDetailSub">Clique em um card à esquerda</div>
+            </div>
+            <div class="tbl-wrap" id="planjDetailWrap" style="display:none">
+              <table>
+                <thead>
+                  <tr id="planjDetailHead"></tr>
+                </thead>
+                <tbody id="planjDetailBody"></tbody>
+              </table>
+            </div>
+            <div id="planjDetailEmpty" style="padding:24px;color:var(--muted);text-align:center;font-size:12px">
+              👈 Selecione um veículo planejado à esquerda para ver os CT-es
             </div>
           </div>
         </div>
@@ -1145,6 +1583,13 @@
               <div class="fg" style="margin-top:8px">
                 <label class="flbl">Tipo de Operação</label>
                 <div id="pTipoSelect" style="margin-top:4px;"></div>
+              </div>
+              <div class="fg" style="margin-top:8px">
+                <label class="flbl">Tipo de Execução</label>
+                <select id="pExecType" class="nx-input" style="width: 100%; margin-top: 4px; border: 1px solid var(--wire2); background: var(--ink3); color: var(--text); border-radius: 6px; padding: 5px 10px; font-size: 11px;">
+                  <option value="ideal" selected>Ideal Planning (Agendamento, Cliente Crítico, Data)</option>
+                  <option value="criticidade">Apenas Criticidade (Data Embarque)</option>
+                </select>
               </div>
 
               <div class="fg" style="margin-top:8px">
@@ -1278,6 +1723,9 @@
             <div id="atrStatusSelect"></div>
             <div id="atrFilialSelect"></div>
             <div id="atrDestSelect"></div>
+            <!-- Date Range Slicers Atrasados (Dropdown Fiel) -->
+            <div id="nx-slicer-atr-prev" style="margin-left:auto"></div>
+            <div id="nx-slicer-atr-entrega"></div>
           </div>
           <div style="display:flex;gap:7px;align-items:center">
             <input class="srch" type="text" id="atrSrch" placeholder="🔍 CTRC, destinatário..." oninput="renderAtras()">
@@ -1380,6 +1828,434 @@
     }
 
     console.log('[NEXUS HUB v8.3] Todos os módulos carregados ✓');
+  </script>
+
+  <!-- NxSlicer: dual-calendar date range widget -->
+  <script>
+  /* =====================================================
+  /* =====================================================
+      NxDatePicker (Baseado em calendario_1.html)
+     ===================================================== */
+  class NxDatePicker {
+    constructor(container, labelPrefix, onChange) {
+      this.container = container;
+      this.labelPrefix = labelPrefix;
+      this.onChange = onChange;
+      
+      this.S = null;
+      this.E = null;
+      this.hov = null;
+      this.phase = null; // 'start' | 'end'
+      this.curY = new Date().getFullYear();
+      this.curM = new Date().getMonth();
+      this.openPanel = null; // 'months' | 'years' | null
+      this.activePreset = null;
+
+      this.initDOM();
+      this.bindEvents();
+      this.updateFields();
+    }
+
+    initDOM() {
+      // Cria a estrutura visual de Trigger (botão no toolbar) + Popover (o calendário)
+      this.container.innerHTML = `
+        <div class="nx-filter-dropdown" tabindex="-1">
+          <div class="nx-filter-trigger">
+            <span>📅 ${this.labelPrefix}</span> <strong class="nxp-summary">Todos</strong> <span>▼</span>
+          </div>
+          <div class="nx-filter-panel">
+            <div class="nx-picker">
+              <div class="nxp-fields">
+                <div class="nxp-field">
+                  <div class="nxp-label">De</div>
+                  <button class="nxp-fbtn empty" data-btn="start">
+                    <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zm-2 4h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4.5z"/></svg>
+                    <span class="nxp-val-s">dd/mm/aaaa</span>
+                  </button>
+                </div>
+                <div class="nxp-arrow">→</div>
+                <div class="nxp-field">
+                  <div class="nxp-label">Até</div>
+                  <button class="nxp-fbtn empty" data-btn="end">
+                    <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M4 .5a.5.5 0 0 0-1 0V1H2a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2h-1V.5a.5.5 0 0 0-1 0V1H4V.5zm-2 4h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4.5z"/></svg>
+                    <span class="nxp-val-e">dd/mm/aaaa</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="nxp-div"></div>
+
+              <div class="nxp-cal">
+                <div class="nxp-hint">Selecione a data inicial</div>
+                <div class="nxp-nav">
+                  <button class="nxp-navbtn" data-nav="-1">
+                    <svg width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M5 1L1 5l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <div class="nxp-title">
+                    <span class="nxp-title-m"></span>
+                    <span class="nxp-title-y"></span>
+                  </div>
+                  <button class="nxp-navbtn" data-nav="1">
+                    <svg width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M1 1l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </div>
+                
+                <div class="nxp-wds">
+                  <div>Do</div><div>Se</div><div>Te</div><div>Qu</div><div>Qu</div><div>Se</div><div>Sá</div>
+                </div>
+                
+                <div class="nxp-grid"></div>
+                <div class="nxp-panel months"></div>
+                <div class="nxp-panel years"></div>
+
+                <div class="nxp-foot">
+                  <div class="nxp-finfo"></div>
+                  <div style="display:flex;gap:4px">
+                    <button class="nxp-btn nxp-clear">Limpar</button>
+                    <button class="nxp-btn primary nxp-ok">OK</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      this.els = {
+        trig: this.container.querySelector('.nx-filter-trigger'),
+        pnl: this.container.querySelector('.nx-filter-panel'),
+        sum: this.container.querySelector('.nxp-summary'),
+        btnS: this.container.querySelector('[data-btn="start"]'),
+        btnE: this.container.querySelector('[data-btn="end"]'),
+        valS: this.container.querySelector('.nxp-val-s'),
+        valE: this.container.querySelector('.nxp-val-e'),
+        cal: this.container.querySelector('.nxp-cal'),
+        hint: this.container.querySelector('.nxp-hint'),
+        titleM: this.container.querySelector('.nxp-title-m'),
+        titleY: this.container.querySelector('.nxp-title-y'),
+        grid: this.container.querySelector('.nxp-grid'),
+        pMonths: this.container.querySelector('.nxp-panel.months'),
+        pYears: this.container.querySelector('.nxp-panel.years'),
+        fInfo: this.container.querySelector('.nxp-finfo'),
+        btnClear: this.container.querySelector('.nxp-clear'),
+        btnOk: this.container.querySelector('.nxp-ok')
+      };
+    }
+
+    bindEvents() {
+      // Trigger toggle do painel principal
+      this.els.trig.onclick = (e) => {
+        this.els.pnl.classList.toggle('is-open');
+        this.closePop(); // Fecha subset do calendário se estiver aberto
+      };
+
+      // Buttons Start/End toggling pop
+      this.els.btnS.onclick = (e) => { e.stopPropagation(); this.togglePop('start'); };
+      this.els.btnE.onclick = (e) => { e.stopPropagation(); this.togglePop('end'); };
+
+
+      // Titles (Month/Year panels)
+      this.els.titleM.onclick = () => this.togglePanel('months');
+      this.els.titleY.onclick = () => this.togglePanel('years');
+
+      // Nav Month
+      this.container.querySelectorAll('.nxp-navbtn').forEach(btn => {
+        btn.onclick = () => this.navMonth(+btn.dataset.nav);
+      });
+
+      // Clear / OK
+      this.els.btnClear.onclick = () => {
+        this.clearAll();
+      };
+      this.els.btnOk.onclick = () => {
+        this.closePop();
+        this.dispatch();
+      };
+
+      // Hover delegation no Grid
+      this.els.grid.onmouseover = (e) => {
+        let t = e.target.closest('[data-d]');
+        if(!t || t.classList.contains('out')) return;
+        if(this.S && !this.E) {
+          let newHov = this.mkD(+t.dataset.y, +t.dataset.m, +t.dataset.d);
+          if(!this.hov || newHov.getTime() !== this.hov.getTime()) {
+            this.hov = newHov;
+            this.paintDays();
+          }
+        }
+      };
+      this.els.grid.onmouseleave = () => {
+        if(this.S && !this.E && this.hov) { this.hov = null; this.paintDays(); }
+      };
+
+      // Clique fora
+      document.addEventListener('click', (e) => {
+        if(!this.container.contains(e.target)) {
+          this.els.pnl.classList.remove('is-open'); // Fecha painel dropdown geral
+          this.closePop(); // Fecha calendário se aberto
+        }
+      });
+    }
+
+    /* Util */
+    pad(n) { return ('0'+n).slice(-2); }
+    fmt(d) { return this.pad(d.getDate()) + '/' + this.pad(d.getMonth()+1) + '/' + d.getFullYear(); }
+    mkD(y, m, d) { return new Date(y, m, d, 12, 0, 0); }
+    td() { let d = new Date(); d.setHours(0,0,0,0); return d; }
+    cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+    sameD(a, b) { return a && b && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+
+    navMonth(dir) {
+      this.curM += dir;
+      if(this.curM < 0) { this.curM = 11; this.curY--; }
+      if(this.curM > 11) { this.curM = 0; this.curY++; }
+      this.closePanel(); this.renderTitle(); this.renderDays();
+    }
+
+    renderTitle() {
+      let mn = this.cap(new Date(this.curY, this.curM, 1).toLocaleDateString('pt-BR', {month:'long'}));
+      this.els.titleM.textContent = mn;
+      this.els.titleY.textContent = this.curY;
+    }
+
+    buildGrid() {
+      let td = this.td();
+      let fDow = new Date(this.curY, this.curM, 1).getDay();
+      let daysIM = new Date(this.curY, this.curM+1, 0).getDate();
+      let prvD = new Date(this.curY, this.curM, 0).getDate();
+      let html = '';
+
+      for(let i=fDow-1; i>=0; i--) html += `<div class="nxp-day out">${prvD - i}</div>`;
+      for(let d=1; d<=daysIM; d++) {
+        let isT = this.sameD(this.mkD(this.curY, this.curM, d), td);
+        html += `<div class="nxp-day${isT ? ' today':''}" data-y="${this.curY}" data-m="${this.curM}" data-d="${d}">${d}</div>`;
+      }
+      let tot = fDow + daysIM;
+      let tail = (7 - (tot%7)) % 7;
+      for(let t2=1; t2<=tail; t2++) html += `<div class="nxp-day out">${t2}</div>`;
+
+      this.els.grid.innerHTML = html;
+
+      this.els.grid.querySelectorAll('.nxp-day:not(.out)').forEach(el => {
+        el.onclick = (e) => {
+          e.stopPropagation();
+          this.pickDay(this.mkD(+el.dataset.y, +el.dataset.m, +el.dataset.d));
+        };
+      });
+    }
+
+    paintDays() {
+      let td = this.td();
+      let effE = this.E || this.hov;
+      this.els.grid.querySelectorAll('.nxp-day:not(.out)').forEach(el => {
+        let dt = this.mkD(+el.dataset.y, +el.dataset.m, +el.dataset.d);
+        let isSt = this.sameD(dt, this.S);
+        let isEn = this.sameD(dt, effE);
+        let isTo = this.sameD(dt, td);
+        let inRg = false;
+        if(this.S && effE) {
+          let lo = Math.min(this.S.getTime(), effE.getTime());
+          let hi = Math.max(this.S.getTime(), effE.getTime());
+          inRg = dt.getTime() > lo && dt.getTime() < hi;
+        }
+        el.className = 'nxp-day' + 
+          (isSt && isEn ? ' start end' : isSt ? ' start' : isEn ? ' end' : inRg ? ' inrange' : '') +
+          (isTo && !isSt && !isEn ? ' today' : '');
+      });
+    }
+
+    renderDays() { this.buildGrid(); this.paintDays(); }
+
+    pickDay(dt) {
+      if(this.phase === 'start') {
+        this.S = dt; this.E = null; this.hov = null;
+        this.phase = 'end';
+        this.els.hint.textContent = 'Selecione a data final';
+        this.els.btnS.classList.remove('active');
+        this.els.btnE.classList.add('active');
+        this.updateFields();
+        this.renderDays();
+      } else if(this.phase === 'end') {
+        if(!this.S) {
+          this.S = dt; this.E = null; this.hov = null;
+          this.els.hint.textContent = 'Selecione a data final';
+          this.updateFields(); this.renderDays(); return;
+        }
+        if(dt.getTime() < this.S.getTime()) { this.E = this.S; this.S = dt; }
+        else { this.E = dt; }
+        this.hov = null;
+        this.updateFields();
+        this.closePop();
+        this.els.pnl.classList.remove('is-open');
+        // Disparar o Ok automático ao selecionar fim do range
+        this.dispatch();
+      }
+    }
+
+    togglePanel(w) {
+      if(this.openPanel === w) { this.closePanel(); return; }
+      this.openPanel = w;
+      this.els.grid.style.display = 'none';
+      if(w === 'months') {
+        this.els.pMonths.classList.add('show'); this.els.pYears.classList.remove('show');
+        this.renderMonths();
+      } else {
+        this.els.pYears.classList.add('show'); this.els.pMonths.classList.remove('show');
+        this.renderYears();
+      }
+    }
+
+    closePanel() {
+      this.openPanel = null;
+      this.els.pMonths.classList.remove('show');
+      this.els.pYears.classList.remove('show');
+      this.els.grid.style.display = '';
+    }
+
+    renderMonths() {
+      let n = new Date(), nM = n.getMonth(), nY = n.getFullYear();
+      let h = '';
+      for(let i=0; i<12; i++) {
+        let m = this.cap(new Date(this.curY, i, 1).toLocaleDateString('pt-BR', {month:'short'}));
+        let c = 'nxp-pitem' + (i===this.curM ? ' selected' : (i===nM && this.curY===nY ? ' current':''));
+        h += `<div class="${c}" data-mi="${i}">${m}</div>`;
+      }
+      this.els.pMonths.innerHTML = h;
+      this.els.pMonths.querySelectorAll('.nxp-pitem').forEach(el => {
+        el.onclick = () => { this.curM = +el.dataset.mi; this.closePanel(); this.renderTitle(); this.renderDays(); };
+      });
+    }
+
+    renderYears() {
+      let nY = new Date().getFullYear();
+      let h = '';
+      for(let i=0; i<16; i++) {
+        let yr = this.curY - 6 + i;
+        let c = 'nxp-pitem' + (yr===this.curY ? ' selected' : (yr===nY ? ' current':''));
+        h += `<div class="${c}" data-yi="${yr}">${yr}</div>`;
+      }
+      this.els.pYears.innerHTML = h;
+      this.els.pYears.querySelectorAll('.nxp-pitem').forEach(el => {
+        el.onclick = () => { this.curY = +el.dataset.yi; this.closePanel(); this.renderTitle(); this.renderDays(); };
+      });
+    }
+
+    openPop(p) {
+      if(this.els.cal.classList.contains('show') && this.phase === p) return;
+      this.phase = p; this.closePanel();
+      let ref = p==='start' ? this.S : (this.E || this.S);
+      if(ref) { this.curY = ref.getFullYear(); this.curM = ref.getMonth(); }
+      this.els.hint.textContent = p==='start' ? 'Selecione a data inicial' : 'Selecione a data final';
+      this.els.btnS.classList.toggle('active', p==='start');
+      this.els.btnE.classList.toggle('active', p==='end');
+      this.els.cal.classList.add('show');
+      
+      // Ajusta posição do popup baseado no tamanho da janela
+      let rect = this.container.getBoundingClientRect();
+      let pop = this.container.querySelector('.nx-picker-pop') || this.els.cal; // Fallback
+      if(rect.right + 340 > window.innerWidth) {
+        if(pop.style) pop.style.right = '0';
+      }
+      
+      this.renderTitle(); this.renderDays(); this.updateFootInfo();
+    }
+
+    closePop() {
+      this.phase = null; this.hov = null;
+      this.els.cal.classList.remove('show');
+      this.els.btnS.classList.remove('active');
+      this.els.btnE.classList.remove('active');
+    }
+
+    togglePop(p) {
+      if(this.els.cal.classList.contains('show') && this.phase===p) this.closePop(); else this.openPop(p);
+    }
+    
+    clearAll() {
+      this.S = null; this.E = null; this.hov = null;
+      this.updateFields();
+      this.closePop();
+      if(this.els.pnl) this.els.pnl.classList.remove('is-open');
+      this.dispatch();
+    }
+
+    updateFields() {
+      if(this.S) { this.els.valS.textContent = this.fmt(this.S); this.els.btnS.classList.remove('empty'); }
+      else { this.els.valS.textContent = 'dd/mm/aaaa'; this.els.btnS.classList.add('empty'); }
+
+      if(this.E) { this.els.valE.textContent = this.fmt(this.E); this.els.btnE.classList.remove('empty'); }
+      else { this.els.valE.textContent = 'dd/mm/aaaa'; this.els.btnE.classList.add('empty'); }
+      
+      if(this.S && this.E) { this.els.sum.textContent = this.fmt(this.S) + ' → ' + this.fmt(this.E); }
+      else if(this.S) { this.els.sum.textContent = this.fmt(this.S) + ' → ...'; }
+      else { this.els.sum.textContent = 'Todos'; }
+    }
+
+    updateFootInfo() {
+      if(this.S && this.E) {
+        let d = Math.round(Math.abs(this.E.getTime() - this.S.getTime())/864e5)+1;
+        this.els.fInfo.innerHTML = `<b>${d}</b> dia${d!==1?'s':''}`;
+      } else if(this.S) { this.els.fInfo.innerHTML = 'Escolha a data final'; }
+      else { this.els.fInfo.innerHTML = ''; }
+    }
+
+    dispatch() {
+      if(this.onChange) this.onChange(this.S, this.E);
+    }
+  }
+
+  /* =====================================================
+     Initialization — mount slicers after DOM ready
+     ===================================================== */
+  window.nxDates = {
+    estDtPrevStart: null, estDtPrevEnd: null,
+    estDtEntregaStart: null, estDtEntregaEnd: null,
+    atrDtPrevStart: null, atrDtPrevEnd: null,
+    atrDtEntregaStart: null, atrDtEntregaEnd: null,
+  };
+
+  function setupNxSlicers() {
+    const estPrev = document.getElementById('nx-slicer-est-prev');
+    if (estPrev) {
+      new NxDatePicker(estPrev, 'Embarque:', (s, e) => {
+        window.nxDates.estDtPrevStart = s;
+        window.nxDates.estDtPrevEnd   = e;
+        if (window.renderEst) window.renderEst();
+      });
+    }
+    const estEntrega = document.getElementById('nx-slicer-est-entrega');
+    if (estEntrega) {
+      new NxDatePicker(estEntrega, 'Entrega:', (s, e) => {
+        window.nxDates.estDtEntregaStart = s;
+        window.nxDates.estDtEntregaEnd   = e;
+        if (window.renderEst) window.renderEst();
+      });
+    }
+
+    const atrPrev = document.getElementById('nx-slicer-atr-prev');
+    if (atrPrev) {
+      new NxDatePicker(atrPrev, 'Embarque:', (s, e) => {
+        window.nxDates.atrDtPrevStart = s;
+        window.nxDates.atrDtPrevEnd   = e;
+        if (window.renderAtras) window.renderAtras();
+      });
+    }
+    const atrEntrega = document.getElementById('nx-slicer-atr-entrega');
+    if (atrEntrega) {
+      new NxDatePicker(atrEntrega, 'Entrega:', (s, e) => {
+
+        window.nxDates.atrDtEntregaStart = s;
+        window.nxDates.atrDtEntregaEnd   = e;
+        if (window.renderAtras) window.renderAtras();
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupNxSlicers);
+  } else {
+    setupNxSlicers();
+  }
   </script>
 
 </body>

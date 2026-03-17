@@ -10791,3 +10791,736 @@ html[data-theme="light"] .tabulator-row.tabulator-selectable:hover {
   color: var(--em) !important;
   font-weight: bold;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   LOGIN SCREEN PREMIUM (v2) — namespace: .lx-*
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Full-screen overlay ── */
+#loginScreen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--ink);
+  overflow: hidden;
+}
+
+/* ── Floating background particles ── */
+.lx-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.lx-particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: var(--em);
+  opacity: 0;
+  animation: lx-float linear infinite;
+}
+
+.lx-particle:nth-child(1) { left: 10%; top: 20%; animation-duration: 8s;  animation-delay: 0s;    width: 3px; height: 3px; }
+.lx-particle:nth-child(2) { left: 30%; top: 70%; animation-duration: 11s; animation-delay: 1.5s;  width: 2px; height: 2px; }
+.lx-particle:nth-child(3) { left: 60%; top: 15%; animation-duration: 9s;  animation-delay: 3s;    width: 4px; height: 4px; }
+.lx-particle:nth-child(4) { left: 80%; top: 55%; animation-duration: 14s; animation-delay: 0.5s;  }
+.lx-particle:nth-child(5) { left: 45%; top: 85%; animation-duration: 7s;  animation-delay: 2s;    width: 3px; height: 3px; }
+.lx-particle:nth-child(6) { left: 90%; top: 30%; animation-duration: 12s; animation-delay: 4s;    }
+
+@keyframes lx-float {
+  0%   { transform: translateY(0)   scale(1);   opacity: 0; }
+  10%  { opacity: .7; }
+  50%  { opacity: .4; }
+  90%  { opacity: .6; }
+  100% { transform: translateY(-60px) scale(1.5); opacity: 0; }
+}
+
+/* ── Shell: two-column split layout ── */
+.lx-shell {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* ════════════════════════
+   LEFT BRAND PANEL
+   ════════════════════════ */
+.lx-brand {
+  flex: 0 0 45%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 40, 30, .95) 0%,
+    rgba(5, 15, 20, .98) 60%,
+    rgba(0, 0, 0, 1) 100%
+  );
+  border-right: 1px solid var(--wire2);
+}
+
+/* Diamond grid inside brand panel */
+.lx-brand-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(45deg,  rgba(139, 233, 253, .04) 1px, transparent 1px),
+    linear-gradient(-45deg, rgba(139, 233, 253, .04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
+/* Decorative glow orb */
+.lx-orb-brand {
+  position: absolute;
+  width: 480px;
+  height: 480px;
+  top: -80px;
+  left: -80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,120,80,.18), transparent 65%);
+  filter: blur(60px);
+  pointer-events: none;
+  animation: lx-pulse 6s ease-in-out infinite;
+}
+
+@keyframes lx-pulse {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%       { transform: scale(1.1); opacity: .7; }
+}
+
+/* Brand content container */
+.lx-brand-content {
+  position: relative;
+  z-index: 2;
+  padding: 48px 52px;
+  max-width: 460px;
+  width: 100%;
+}
+
+/* Logo row (icon + name) */
+.lx-logo {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 56px;
+}
+
+.lx-logo-box {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--em15), var(--em08));
+  border: 1px solid var(--em40);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 32px var(--em15), inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.lx-logo-text {
+  font-family: ui-monospace, monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--em);
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Spinning ring around logo */
+.lx-logo-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  border-top-color: var(--em40);
+  border-right-color: var(--em25);
+  animation: lx-spin 8s linear infinite;
+}
+
+@keyframes lx-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.lx-logo-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lx-brand-name {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: var(--txt);
+  font-family: ui-monospace, monospace;
+  line-height: 1;
+}
+
+.lx-brand-sub {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-family: ui-monospace, monospace;
+}
+
+/* Feature list */
+.lx-features {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 48px;
+}
+
+.lx-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  font-size: 14px;
+  color: var(--muted2);
+  line-height: 1.5;
+}
+
+.lx-feat-ic {
+  color: var(--em);
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  text-shadow: 0 0 8px var(--em60);
+  animation: lx-glow-ic 3s ease-in-out infinite;
+}
+
+.lx-feature:nth-child(2) .lx-feat-ic { animation-delay: .5s; }
+.lx-feature:nth-child(3) .lx-feat-ic { animation-delay: 1s; }
+.lx-feature:nth-child(4) .lx-feat-ic { animation-delay: 1.5s; }
+
+@keyframes lx-glow-ic {
+  0%, 100% { text-shadow: 0 0 8px var(--em60); opacity: 1; }
+  50%       { text-shadow: 0 0 16px var(--em), 0 0 32px var(--em40); opacity: .85; }
+}
+
+/* Security badge */
+.lx-security-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border: 1px solid var(--em25);
+  border-radius: 100px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  background: rgba(139, 233, 253, .04);
+  backdrop-filter: blur(8px);
+}
+
+.lx-sec-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--em2);
+  box-shadow: 0 0 8px var(--em2);
+  animation: lx-blink 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes lx-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .4; }
+}
+
+/* ════════════════════════
+   RIGHT FORM PANEL
+   ════════════════════════ */
+.lx-form-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--ink);
+  position: relative;
+}
+
+.lx-form-wrap {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* Mobile logo - only visible on small screens */
+.lx-mobile-logo {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.lx-logo-box-sm {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--em15), var(--em08));
+  border: 1px solid var(--em40);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--em);
+  letter-spacing: 1px;
+}
+
+.lx-brand-name-sm {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  color: var(--txt);
+  font-family: ui-monospace, monospace;
+}
+
+/* Form header */
+.lx-form-header {
+  margin-bottom: 40px;
+}
+
+.lx-form-eyebrow {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--em);
+  font-family: ui-monospace, monospace;
+  font-weight: 500;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lx-form-eyebrow::before {
+  content: '';
+  width: 20px;
+  height: 1px;
+  background: var(--em);
+  display: inline-block;
+}
+
+.lx-form-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--txt);
+  letter-spacing: -0.5px;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.lx-form-desc {
+  font-size: 14px;
+  color: var(--muted2);
+  line-height: 1.6;
+}
+
+/* Field group */
+.lx-field-group {
+  margin-bottom: 24px;
+}
+
+.lx-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--muted2);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.lx-label-ic {
+  color: var(--em);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.lx-input-wrap {
+  position: relative;
+}
+
+.lx-input {
+  width: 100%;
+  background: rgba(10, 10, 10, .8);
+  border: 1px solid var(--wire2);
+  border-radius: 10px;
+  padding: 14px 18px;
+  color: var(--txt);
+  font-family: ui-monospace, monospace;
+  font-size: 14px;
+  line-height: 1;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s, background .2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.lx-input:hover {
+  border-color: var(--wire3);
+  background: rgba(15, 15, 15, .9);
+}
+
+.lx-input:focus {
+  border-color: var(--em40);
+  background: rgba(139, 233, 253, .03);
+  box-shadow: 0 0 0 3px rgba(139, 233, 253, .06), 0 0 20px rgba(139, 233, 253, .04);
+}
+
+.lx-input:focus + .lx-eye-btn + .lx-input-focus-line,
+.lx-input:focus + .lx-input-focus-line {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+/* Input focus accent line */
+.lx-input-focus-line {
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--em), transparent);
+  opacity: 0;
+  transform: scaleX(.4);
+  transition: opacity .3s, transform .3s;
+  pointer-events: none;
+  border-radius: 0 0 10px 10px;
+}
+
+/* Error state on input */
+.lx-input.lx-input-error {
+  border-color: rgba(255, 85, 85, .5);
+  box-shadow: 0 0 0 3px rgba(255, 85, 85, .06);
+}
+
+/* Password input with eye button */
+.lx-pass-wrap .lx-input {
+  padding-right: 48px;
+}
+
+.lx-eye-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+  opacity: .6;
+  transition: opacity .2s;
+  display: flex;
+  align-items: center;
+}
+
+.lx-eye-btn:hover {
+  opacity: 1;
+}
+
+.lx-eye-ic {
+  pointer-events: none;
+  filter: grayscale(1);
+}
+
+/* Error box */
+.lx-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 85, 85, .3);
+  background: rgba(255, 85, 85, .08);
+  color: #ff5555;
+  font-size: 13px;
+  margin-bottom: 24px;
+  animation: lx-error-in .2s ease forwards;
+}
+
+@keyframes lx-error-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.lx-err-ic {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+/* Submit button */
+.lx-submit-btn {
+  position: relative;
+  width: 100%;
+  padding: 15px 24px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--em), rgba(80, 200, 180, .85));
+  color: #000;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+  transition: transform .15s ease, box-shadow .15s ease, filter .15s;
+  box-shadow: 0 4px 20px rgba(139, 233, 253, .2), 0 0 0 1px rgba(255,255,255,.04) inset;
+  margin-bottom: 32px;
+  min-height: 52px;
+}
+
+.lx-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(139, 233, 253, .3), 0 0 0 1px rgba(255,255,255,.08) inset;
+  filter: brightness(1.05);
+}
+
+.lx-submit-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 12px rgba(139, 233, 253, .15);
+}
+
+.lx-submit-btn:focus-visible {
+  outline: 2px solid var(--em);
+  outline-offset: 3px;
+}
+
+.lx-btn-label {
+  position: relative;
+  z-index: 1;
+  transition: transform .2s;
+}
+
+.lx-btn-arrow {
+  position: relative;
+  z-index: 1;
+  font-size: 18px;
+  transition: transform .2s;
+  line-height: 1;
+}
+
+.lx-submit-btn:hover .lx-btn-arrow {
+  transform: translateX(4px);
+}
+
+/* Shimmer effect on button */
+.lx-btn-shimmer {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+  transform: skewX(-20deg);
+  animation: lx-shimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes lx-shimmer {
+  0%   { left: -100%; }
+  50%, 100% { left: 140%; }
+}
+
+/* Loading state */
+.lx-submit-btn.lx-loading {
+  pointer-events: none;
+  opacity: .85;
+}
+
+.lx-submit-btn.lx-loading .lx-btn-label::after {
+  content: '...';
+  animation: lx-dots 1s step-start infinite;
+}
+
+@keyframes lx-dots {
+  0%   { content: '.'; }
+  33%  { content: '..'; }
+  66%  { content: '...'; }
+  100% { content: '.'; }
+}
+
+/* Form footer */
+.lx-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-family: ui-monospace, monospace;
+}
+
+.lx-footer-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--em40);
+  flex-shrink: 0;
+}
+
+/* ── Shake animation (wrong password) ── */
+@keyframes lx-shake {
+  0%, 100% { transform: translateX(0); }
+  15%       { transform: translateX(-8px); }
+  30%       { transform: translateX(8px); }
+  45%       { transform: translateX(-6px); }
+  60%       { transform: translateX(6px); }
+  75%       { transform: translateX(-3px); }
+  90%       { transform: translateX(3px); }
+}
+
+.lx-shake {
+  animation: lx-shake .5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* ── Entrance animation for the form panel ── */
+@keyframes lx-slide-in {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+#loginScreen.lx-visible .lx-form-wrap {
+  animation: lx-slide-in .5s cubic-bezier(.22,1,.36,1) both;
+}
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE — TABLET & MOBILE
+   ══════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .lx-brand {
+    display: none;
+  }
+
+  .lx-mobile-logo {
+    display: flex;
+  }
+
+  .lx-form-panel {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .lx-form-panel {
+    padding: 20px 16px;
+    align-items: flex-start;
+    padding-top: 48px;
+  }
+
+  .lx-form-title {
+    font-size: 24px;
+  }
+
+  .lx-submit-btn {
+    padding: 14px 20px;
+    font-size: 12px;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   LIGHT THEME OVERRIDES
+   ══════════════════════════════════════════════ */
+html[data-theme="light"] #loginScreen {
+  background: #f0f4f8;
+}
+
+html[data-theme="light"] .lx-brand {
+  background: linear-gradient(135deg, #e0f0ff 0%, #cce8ff 50%, #b8e4ef 100%);
+  border-right-color: rgba(0, 0, 0, .08);
+}
+
+html[data-theme="light"] .lx-brand-grid {
+  background-image:
+    linear-gradient(45deg, rgba(0,100,150,.06) 1px, transparent 1px),
+    linear-gradient(-45deg, rgba(0,100,150,.06) 1px, transparent 1px);
+}
+
+html[data-theme="light"] .lx-brand-name,
+html[data-theme="light"] .lx-form-title {
+  color: #0a1628;
+}
+
+html[data-theme="light"] .lx-brand-sub,
+html[data-theme="light"] .lx-form-desc,
+html[data-theme="light"] .lx-feature {
+  color: #4a5568;
+}
+
+html[data-theme="light"] .lx-form-panel {
+  background: #f0f4f8;
+}
+
+html[data-theme="light"] .lx-input {
+  background: #fff;
+  border-color: rgba(0,0,0,.15);
+  color: #0a1628;
+}
+
+html[data-theme="light"] .lx-input:hover {
+  border-color: rgba(0,0,0,.25);
+  background: #fafcff;
+}
+
+html[data-theme="light"] .lx-input:focus {
+  border-color: rgba(0, 120, 200, .5);
+  background: rgba(0, 120, 200, .03);
+  box-shadow: 0 0 0 3px rgba(0, 120, 200, .08);
+}
+
+html[data-theme="light"] .lx-label {
+  color: #4a5568;
+}
+
+html[data-theme="light"] .lx-security-badge {
+  border-color: rgba(0,0,0,.15);
+  background: rgba(0,0,0,.04);
+  color: #6b7280;
+}
+
+html[data-theme="light"] .lx-submit-btn {
+  background: linear-gradient(135deg, #0891b2, #0ea5e9);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(8,145,178,.25);
+}
+
+html[data-theme="light"] .lx-submit-btn:hover {
+  box-shadow: 0 8px 28px rgba(8,145,178,.35);
+}
+
+html[data-theme="light"] .lx-form-footer {
+  color: #9ca3af;
+}
+
+html[data-theme="light"] .lx-footer-dot {
+  background: rgba(0,0,0,.2);
+}

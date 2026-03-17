@@ -1075,6 +1075,9 @@ function goPage(name, el) {
     } else if (name === 'patio') {
       // Pátio: renderizar dados do pátio
       renderPat();
+    } else if (name === 'planejado') {
+      // Planejado: renderizar blocos de veículos
+      renderPlanejado();
     } else if (name === 'atrasados') {
       // Atrasados: renderizar dados de atrasados
       renderAtras();
@@ -2411,6 +2414,38 @@ function getEstData() {
   const rg = (window._estDrillRegion || '');
   if (rg) d = d.filter(r => ((REGION_MAP[String(r.destino || '').toUpperCase()?.trim()] || 'Outros') === rg));
   if (sr) d = d.filter(r => srch(r, sr));
+
+  // 🔥 Filtros NxDatePicker — Embarque & Entrega (ranges De/Até)
+  if (window.nxDates) {
+    const pS = window.nxDates.estDtPrevStart;
+    const pE = window.nxDates.estDtPrevEnd;
+    if (pS || pE) {
+      const lo = pS ? new Date(pS.getFullYear(), pS.getMonth(), pS.getDate(), 0, 0, 0, 0) : null;
+      const hi = pE ? new Date(pE.getFullYear(), pE.getMonth(), pE.getDate(), 23, 59, 59, 999) : null;
+      d = d.filter(r => {
+        const dt = parseDateSafe(r.DT_PREV_EMBARQUE || r.dt_prev);
+        if (!dt) return false;
+        if (lo && dt < lo) return false;
+        if (hi && dt > hi) return false;
+        return true;
+      });
+    }
+
+    const eS = window.nxDates.estDtEntregaStart;
+    const eE = window.nxDates.estDtEntregaEnd;
+    if (eS || eE) {
+      const lo = eS ? new Date(eS.getFullYear(), eS.getMonth(), eS.getDate(), 0, 0, 0, 0) : null;
+      const hi = eE ? new Date(eE.getFullYear(), eE.getMonth(), eE.getDate(), 23, 59, 59, 999) : null;
+      d = d.filter(r => {
+        const dt = parseDateSafe(r.Prazo_Entrega_Final || r.dt_entrega);
+        if (!dt) return false;
+        if (lo && dt < lo) return false;
+        if (hi && dt > hi) return false;
+        return true;
+      });
+    }
+  }
+
   try { d.forEach(r => { r.dias_estoque = calcDiasEstoque(r?.data || r?.emissao || ''); }); } catch (e) { if (window.__DEV) console.warn("[NX]", e); }
   d.sort((a, b) => a.prio_num - b.prio_num);
   return applySortToData(d, 'estBody');
@@ -2666,6 +2701,37 @@ function getAtrData() {
   if (fiSel.length) d = d.filter(r => fiSel.includes(r.estoque) || fiSel.includes(r.origem));
   if (deSel.length) d = d.filter(r => deSel.includes(r.destino));
   if (sr) d = d.filter(r => srch(r, sr));
+
+  // 🔥 Filtros NxDatePicker — Embarque & Entrega (ranges De/Até)
+  if (window.nxDates) {
+    const pS = window.nxDates.atrDtPrevStart;
+    const pE = window.nxDates.atrDtPrevEnd;
+    if (pS || pE) {
+      const lo = pS ? new Date(pS.getFullYear(), pS.getMonth(), pS.getDate(), 0, 0, 0, 0) : null;
+      const hi = pE ? new Date(pE.getFullYear(), pE.getMonth(), pE.getDate(), 23, 59, 59, 999) : null;
+      d = d.filter(r => {
+        const dt = parseDateSafe(r.DT_PREV_EMBARQUE || r.dt_prev);
+        if (!dt) return false;
+        if (lo && dt < lo) return false;
+        if (hi && dt > hi) return false;
+        return true;
+      });
+    }
+
+    const eS = window.nxDates.atrDtEntregaStart;
+    const eE = window.nxDates.atrDtEntregaEnd;
+    if (eS || eE) {
+      const lo = eS ? new Date(eS.getFullYear(), eS.getMonth(), eS.getDate(), 0, 0, 0, 0) : null;
+      const hi = eE ? new Date(eE.getFullYear(), eE.getMonth(), eE.getDate(), 23, 59, 59, 999) : null;
+      d = d.filter(r => {
+        const dt = parseDateSafe(r.Prazo_Entrega_Final || r.dt_entrega);
+        if (!dt) return false;
+        if (lo && dt < lo) return false;
+        if (hi && dt > hi) return false;
+        return true;
+      });
+    }
+  }
 
   try { d.forEach(r => { r.dias_estoque = calcDiasEstoque(r?.data || r?.emissao || ''); }); } catch (e) { if (window.__DEV) console.warn("[NX]", e); }
   d.sort((a, b) => a.prio_num - b.prio_num);
@@ -3035,10 +3101,26 @@ function renderDescCards(groups) {
     return;
   }
   list.innerHTML = groups.map((g, idx) => {
-    const tagCls = g.hasCrit ? 'crit' : g.hasAgend ? 'agend' : 'ok';
-    const tagTxt = g.hasCrit ? '⚡ CRÍTICO' : g.hasAgend ? '📅 AGENDADO' : '✓ NO PRAZO';
+    // Determina o pior prazo do grupo para a badge
+    const hasAtrasado = g.rows.some(r => r.prazo === 'Atrasado');
+    const hasHoje = g.rows.some(r => r.prazo === 'Hoje');
+    const hasAmanha = g.rows.some(r => r.prazo === 'Amanhã');
+
+    let tagCls, tagTxt;
+    if (g.hasCrit) {
+      tagCls = 'crit'; tagTxt = '⚡ CRÍTICO';
+    } else if (hasAtrasado) {
+      tagCls = 'crit'; tagTxt = '⚠ ATRASADO';
+    } else if (hasHoje) {
+      tagCls = 'agend'; tagTxt = '🕐 HOJE';
+    } else if (g.hasAgend || hasAmanha) {
+      tagCls = 'agend'; tagTxt = g.hasAgend ? '📅 AGENDADO' : '📅 AMANHÃ';
+    } else {
+      tagCls = 'ok'; tagTxt = '✓ NO PRAZO';
+    }
+
     const cardCls = g.id === window._descSelectedId ? ' selected' : '';
-    const borderCls = g.hasCrit ? ' tag-crit' : g.hasAgend ? ' tag-agend' : ' tag-prazo';
+    const borderCls = (tagCls === 'crit') ? ' tag-crit' : (tagCls === 'agend') ? ' tag-agend' : ' tag-prazo';
     const scorePct = (g.score * 100).toFixed(0);
     const safeId = escAttr(g.id);
 
@@ -3094,6 +3176,12 @@ function selectDescCard(idx) {
   document.getElementById('descDetailWrap').style.display = '';
   document.getElementById('descDetailEmpty').style.display = 'none';
   renderDescDetail(g.rows);
+
+  // Atualiza o cabeçalho com os totais do veículo selecionado
+  if (typeof updateHeaderWithFilteredTotals === 'function') {
+    const label = g.id.replace('||', ' · ').slice(0, 30);
+    updateHeaderWithFilteredTotals(g.rows, label);
+  }
 }
 
 function deduplicateByCTRC(rows) {
@@ -3263,6 +3351,212 @@ function exportDescPDF() {
 
 // Compat stubs para referências existentes (seqCard era usado internamente)
 function seqCard(r, i) { return ''; } // mantido para evitar erros de referências antigas
+
+// ═══════════════════════════════════════════════════════
+// PLANEJADO v1.0 — PAINEL INTERATIVO (TWO-COLUMN)
+// ═══════════════════════════════════════════════════════
+window._planjGroups = [];
+window._planjSelectedId = null;
+
+function buildPlanjGroups(rows, keyFn) {
+  const map = new Map();
+  rows.forEach(r => {
+    const k = keyFn(r) || '—';
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(r);
+  });
+  return [...map.entries()].map(([id, rows]) => ({ rawId: id, rows }));
+}
+
+function calcPlanjScores(groups) {
+  groups.forEach(g => {
+    // Calcular totais
+    g.pesoTotal = g.rows.reduce((s, r) => s + (r.p_oper || 0), 0);
+    g.volTotal = g.rows.reduce((s, r) => s + (r.qtd_vol || 0), 0);
+    g.valorTotal = g.rows.reduce((s, r) => s + (r.vl_nf || 0), 0);
+    g.qtdCtes = g.rows.length;
+    g.hasCrit = g.rows.some(r => r.is_critico);
+    g.hasAgend = g.rows.some(r => r.is_agend);
+
+    // Contar atrasados e SLA Base
+    const noPrazo = g.rows.filter(r => r.prazo === 'Atrasado' || r.prazo === 'Hoje').length;
+    g.slaRaw = 1 - (noPrazo / (g.rows.length || 1));
+    g.qtdAtrasados = g.rows.filter(r => r.prazo === 'Atrasado').length;
+
+    // Calcular destino predominante (maior soma de peso)
+    const destMap = new Map();
+    g.rows.forEach(r => {
+      const d = r.destino || '—';
+      destMap.set(d, (destMap.get(d) || 0) + (r.p_oper || 0));
+    });
+
+    let predominantDest = '—';
+    let maxPeso = -1;
+    destMap.forEach((peso, dest) => {
+      if (peso > maxPeso) { maxPeso = peso; predominantDest = dest; }
+    });
+
+    // ID final do card: DESTINO - VEICULO
+    g.id = `${predominantDest} - ${g.rawId}`;
+
+    // Helper p/ score final
+    g.minutosFilaRaw = 0; // não aplicável aqui, mas mantido pra manter função parecida com Descarga
+  });
+
+  if (groups.length <= 1) {
+    groups.forEach(g => { g.score = g.slaRaw; });
+    return groups;
+  }
+
+  const mn = arr => Math.min(...arr);
+  const mx = arr => Math.max(...arr);
+  const norm = (v, lo, hi) => hi === lo ? 0 : (v - lo) / (hi - lo);
+
+  const slaVals = groups.map(g => g.slaRaw);
+  const pesoVals = groups.map(g => g.pesoTotal);
+  const volVals = groups.map(g => g.volTotal);
+
+  groups.forEach(g => {
+    const nSla = 1 - norm(g.slaRaw, mn(slaVals), mx(slaVals));
+    const nPeso = norm(g.pesoTotal, mn(pesoVals), mx(pesoVals));
+    const nVol = norm(g.volTotal, mn(volVals), mx(volVals));
+    // Peso para Planejado foca mais no carregamento e sla
+    g.score = nSla * 0.40 + nPeso * 0.45 + nVol * 0.15;
+  });
+  return groups;
+}
+
+function renderPlanjCards(groups) {
+  const list = document.getElementById('planjCardList');
+  if (!list) return;
+  if (!groups.length) {
+    list.innerHTML = '<div style="padding:14px;text-align:center;color:var(--muted);font-size:11px">Nenhum veículo planejado encontrado.</div>';
+    return;
+  }
+
+  list.innerHTML = groups.map((g, idx) => {
+    const hasAtrasado = g.rows.some(r => r.prazo === 'Atrasado');
+    const hasHoje = g.rows.some(r => r.prazo === 'Hoje');
+    const hasAmanha = g.rows.some(r => r.prazo === 'Amanhã');
+
+    let tagCls, tagTxt;
+    if (g.hasCrit) { tagCls = 'crit'; tagTxt = '⚡ CRÍTICO'; }
+    else if (hasAtrasado) { tagCls = 'crit'; tagTxt = '⚠ ATRASADO'; }
+    else if (hasHoje) { tagCls = 'agend'; tagTxt = '🕐 HOJE'; }
+    else if (g.hasAgend || hasAmanha) { tagCls = 'agend'; tagTxt = g.hasAgend ? '📅 AGENDADO' : '📅 AMANHÃ'; }
+    else { tagCls = 'ok'; tagTxt = '✓ NO PRAZO'; }
+
+    const cardCls = g.id === window._planjSelectedId ? ' selected' : '';
+    const borderCls = (tagCls === 'crit') ? ' tag-crit' : (tagCls === 'agend') ? ' tag-agend' : ' tag-prazo';
+    const scorePct = (g.score * 100).toFixed(0);
+    const safeId = escAttr(g.id);
+
+    return `<div class="desc-score-card${borderCls}${cardCls}" id="pcard-${idx}"
+          onclick="selectPlanjCard(${idx})"
+          style="animation-delay:${Math.min(idx * .04, .5)}s">
+          <div class="dsc-top">
+            <div class="dsc-id" title="${safeId}">${escHtml(g.id.slice(0, 36))}</div>
+            <span class="dsc-tag ${tagCls}">${tagTxt}</span>
+          </div>
+          <div class="dsc-ct" style="margin-bottom:3px">${g.qtdCtes} CT-e(s) · ${g.qtdAtrasados > 0 ? `<b style="color:var(--danger)">${g.qtdAtrasados} Atrasado(s)</b>` : '0 Atrasos'}</div>
+          
+          <div class="dsc-kpis" style="margin-top:8px">
+            <div class="dsc-kpi">
+              <div class="dsc-kl">Peso</div>
+              <div class="dsc-kv">${fN2(g.pesoTotal / 1000)}<span style="font-size:9px;color:var(--muted)"> t</span></div>
+            </div>
+            <div class="dsc-kpi">
+              <div class="dsc-kl">Valor NF</div>
+              <div class="dsc-kv" style="color:var(--em2);font-size:10px">R$ ${fM(g.valorTotal)}</div>
+            </div>
+            <div class="dsc-kpi">
+              <div class="dsc-kl">Volumes</div>
+              <div class="dsc-kv">${fN(g.volTotal)}</div>
+            </div>
+          </div>
+        </div>`;
+  }).join('');
+}
+
+function selectPlanjCard(idx) {
+  window._planjSelectedId = window._planjGroups[idx]?.id;
+
+  document.querySelectorAll('#planjCardList .desc-score-card').forEach((c, i) => {
+    c.classList.toggle('selected', i === idx);
+  });
+
+  const g = window._planjGroups[idx];
+  if (!g) return;
+
+  document.getElementById('planjDetailTitle').textContent = g.id.slice(0, 60);
+  document.getElementById('planjDetailSub').textContent = `${g.qtdCtes} CT-e(s) · ${fN2(g.pesoTotal / 1000)} t · R$ ${fM(g.valorTotal)}`;
+  document.getElementById('planjDetailWrap').style.display = '';
+  document.getElementById('planjDetailEmpty').style.display = 'none';
+
+  renderPlanjDetail(g.rows);
+}
+
+function renderPlanjDetail(rows) {
+  const deduped = deduplicateByCTRC(rows);
+  deduped.sort((a, b) => (a.prio_num || 99) - (b.prio_num || 99));
+
+  const cols = [
+    { k: 'ctrc', l: 'CTRC' },
+    { k: 'remetente', l: 'remetente' },
+    { k: 'destinatario', l: 'destinatario' },
+    { k: 'origem', l: 'origem' },
+    { k: 'destino', l: 'destino' },
+    { k: 'p_oper', l: 'p_oper' },
+    { k: 'qtd_vol', l: 'qtd_vol' },
+    { k: 'vl_nf', l: 'vl_nf' },
+    { k: 'prazo', l: 'prazo' },
+    { k: 'risco', l: 'risco' },
+    { k: 'is_critico', l: 'is_critico' },
+  ];
+  const totals = calculateTotals(deduped, cols.map(c => c.k));
+  renderTbl('planjDetailHead', 'planjDetailBody', deduped, cols, totals);
+}
+
+function renderPlanejado() {
+  // Pool: somente notas com status PLANEJADO
+  const pool = DB.filter(r => r.status === 'PLANEJADO');
+
+  // Extrair veículos da Mercadoria_Planejada (se string nula, cai no fallback)
+  let groups = buildPlanjGroups(pool, r => {
+    return String(r.mercadoria_planejada || 'Alocação Pendente').trim();
+  });
+
+  groups = calcPlanjScores(groups);
+
+  // Ordenar ESTRITAMENTE pelo Score
+  groups.sort((a, b) => b.score - a.score);
+  window._planjGroups = groups;
+
+  const total = groups.reduce((s, g) => s + g.qtdCtes, 0);
+  const pesoT = groups.reduce((s, g) => s + g.pesoTotal, 0);
+  const valT = groups.reduce((s, g) => s + g.valorTotal, 0);
+  const atrasados = groups.reduce((s, g) => s + g.qtdAtrasados, 0);
+
+  const el = document.getElementById('planjCnt');
+  if (el) el.textContent = `${groups.length} Vucs. · ${fN(total)} CTs · ${fN2(pesoT / 1000)} t · R$ ${fM(valT)} · ${atrasados} Atrasos`;
+
+  renderPlanjCards(groups);
+
+  // Restore selection or select first
+  let selIdx = null;
+  if (window._planjSelectedId !== null) {
+    selIdx = groups.findIndex(g => g.id === window._planjSelectedId);
+  }
+  if (selIdx === null || selIdx === -1) selIdx = groups.length ? 0 : null;
+
+  if (selIdx !== null) {
+    selectPlanjCard(selIdx);
+  } else {
+    document.getElementById('planjDetailWrap').style.display = 'none';
+    document.getElementById('planjDetailEmpty').style.display = '';
+  }
+}
+
 
 // ═══════════════════════════════════════════════════════
 // PLANEJAMENTO
@@ -3452,8 +3746,15 @@ function runPlan() {
   const filial = (selFilial || '');
   const destSel = getMultiSel('pDest');
   const tipoSel = getMultiSel('pTipo');
-  // Se "Todos" estiver selecionado para destino, a matriz fica vazia. Vamos considerar hasDestino
   const hasDestino = destSel.length > 0;
+
+  // ── LEITURA DO TIPO DE EXECUÇÃO (pExecType) ──────────────────
+  // 'ideal'       → Ideal Planning: respeita isCrit > isAgend > prazo > dt_prev
+  // 'criticidade' → Apenas Criticidade (Data Embarque): ordena SOMENTE por dt_prev
+  //                 crescente, sem benefício de isCrit/isAgend. Garante que a data
+  //                 mais antiga embarca primeiro independente de qualquer outro fator.
+  const execType = (document.getElementById('pExecType')?.value || 'ideal');
+  const modoFifo = (execType === 'criticidade');
 
   const statusSel = getPlanStatusValues();
   const pesoMax = toNum(document.getElementById('pPeso')?.value);
@@ -3481,10 +3782,10 @@ function runPlan() {
         return true;
       });
 
-
       console.log('[PLAN] Debug:', {
         dbTotal: DB.length,
         filial, destSel, tipoSel, statusSel,
+        execType, modoFifo,
         poolCtx: poolCtx.length,
         prazoStats: {
           Atrasado: DB.filter(r => r.prazo === 'Atrasado').length,
@@ -3495,19 +3796,21 @@ function runPlan() {
         }
       });
 
+      // ── parseSortDate: interpreta DD/MM/YYYY [HH:mm] e YYYY-MM-DD ──
+      // Usa apenas os 10 primeiros chars para comparar somente a data,
+      // ignorando a hora (que pode variar dentro do mesmo dia/pallet).
       const parseSortDate = s => {
         if (!s) return Infinity;
-        let m = String(s)?.trim().slice(0, 10).match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
-        if (m) { let y = +m[3]; return new Date(y < 100 ? 2000 + y : y, +m[2] - 1, +m[1]).getTime(); }
-        m = String(s)?.trim().slice(0, 10).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+        let m = String(s).trim().slice(0, 10).match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+        if (m) { const y = +m[3]; return new Date(y < 100 ? 2000 + y : y, +m[2] - 1, +m[1]).getTime(); }
+        m = String(s).trim().slice(0, 10).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
         if (m) return new Date(+m[1], +m[2] - 1, +m[3]).getTime();
         return Infinity;
       };
 
-
-      // Pool VÁLIDO: agrupar por CTRC e validar peso/valor no nível do conhecimento
-      // ⚠ CORREÇÃO v8.3.3: Filtrar por REGISTRO individual causa exclusão de linhas de pallet
-      //   (p_oper=0) que pertencem a CTRCs válidos. A validação deve ser feita no nível do CTRC.
+      // ── 2. Pool VÁLIDO: agrupar por CTRC e validar peso/valor ─────
+      // CORREÇÃO v8.3.3: validação no nível do CTRC (não do registro individual),
+      // para não excluir linhas de pallet com p_oper=0 de CTRCs válidos.
       const ctrcGroupMap = new Map();
       poolCtx.forEach(r => {
         const key = r.ctrc || r.cod;
@@ -3520,10 +3823,7 @@ function runPlan() {
 
       let pool = [];
       ctrcGroupMap.forEach(g => {
-        // CTRC elegível se tiver peso OU valor válido no total
-        if (g.p_total > 0 || g.v_total > 0) {
-          pool.push(...g.linhas);
-        }
+        if (g.p_total > 0 || g.v_total > 0) pool.push(...g.linhas);
       });
 
       const ctrcCount = [...ctrcGroupMap.values()].filter(g => g.p_total > 0 || g.v_total > 0).length;
@@ -3531,17 +3831,16 @@ function runPlan() {
       const valorPoolTotal = pool.reduce((s, r) => s + (r.vl_nf || 0), 0);
 
       console.log('[PLAN] Pool elegível (nível CTRC):', {
-        ctrcs: ctrcCount,
-        linhas: pool.length,
-        peso_kg: pesoPoolTotal.toFixed(1),
-        valor: valorPoolTotal.toFixed(2)
+        ctrcs: ctrcCount, linhas: pool.length,
+        peso_kg: pesoPoolTotal.toFixed(1), valor: valorPoolTotal.toFixed(2)
       });
       const prazoPool = {};
       pool.forEach(r => { prazoPool[r.prazo] = (prazoPool[r.prazo] || 0) + 1; });
       console.log('[PLAN] Distribuição de prazo no pool:', prazoPool);
 
-
-      // ── 2. Separar pallets (equipamento > 0) de carga solta ───────
+      // ── 3. Separar pallets e carga solta ─────────────────────────
+      // REGRA INVIOLÁVEL: pallet é atômico — todos os seus CTEs embarcam
+      // juntos ou ficam todos rejeitados. Nunca quebrar um pallet.
       const palletMap = new Map();
       const solta = [];
       pool.forEach(r => {
@@ -3554,45 +3853,87 @@ function runPlan() {
         }
       });
 
-      // ── 3. Prioridade por Contágio: se UM item do pallet é crítico/agend
-      //       → todo o pallet assume prioridade máxima ────────────────
+      // ── 4. Construir objeto de pallet com metadados de ordenação ──
+      // Contágio: se UM item do pallet é crítico/agendado, o pallet inteiro herda.
+      // dtPrevMin: menor timestamp de dt_prev entre os records — usado como chave
+      //            primária de ordenação no modo FIFO (criticidade).
+      const prazoOrder = { Atrasado: 0, Hoje: 1, 'Amanhã': 2, 'No Prazo': 3, 'Sem Data': 4 };
+
       const pallets = [...palletMap.values()].map(rows => {
-        const isCrit = rows.some(r => r.is_critico);
+        const isCrit  = rows.some(r => r.is_critico);
         const isAgend = rows.some(r => r.is_agend);
+
         const prazoMin = rows.reduce((best, r) => {
-          const order = { Atrasado: 0, Hoje: 1, 'Amanhã': 2, 'No Prazo': 3, 'Sem Data': 4 };
-          return (order[r.prazo] || 4) < (order[best] || 4) ? r.prazo : best;
+          return (prazoOrder[r.prazo] ?? 4) < (prazoOrder[best] ?? 4) ? r.prazo : best;
         }, 'Sem Data');
+
+        // Menor dt_prev do pallet (timestamp numérico para comparação direta)
+        const dtPrevMin = rows.reduce((min, r) => {
+          const t = parseSortDate(r.dt_prev);
+          return t < min ? t : min;
+        }, Infinity);
+
         return {
           rows,
-          peso: rows.reduce((s, r) => s + (r.p_oper || 0), 0),
-          valor: rows.reduce((s, r) => s + (r.vl_nf || 0), 0),
+          peso:      rows.reduce((s, r) => s + (r.p_oper || 0), 0),
+          valor:     rows.reduce((s, r) => s + (r.vl_nf  || 0), 0),
           isCrit,
           isAgend,
-          prazoMin
+          prazoMin,
+          dtPrevMin
         };
       });
 
-      // ── 4. Hierarquia rígida de processamento ─────────────────────
-      const palletOrder = { Atrasado: 0, Hoje: 1, 'Amanhã': 2, 'No Prazo': 3, 'Sem Data': 4 };
-      pallets.sort((a, b) => {
-        // 1. Clientes Críticos primeiro
-        if (a.isCrit !== b.isCrit) return a.isCrit ? -1 : 1;
-        // 2. Agendamentos
-        if (a.isAgend !== b.isAgend) return a.isAgend ? -1 : 1;
-        // 3. FIFO para Entrega
-        if (tipoSel.includes('Entrega')) {
-          const tA = Math.min(...a.rows.map(r => parseSortDate(r.dt_entrega)));
-          const tB = Math.min(...b.rows.map(r => parseSortDate(r.dt_entrega)));
-          if (tA !== tB) return tA - tB;
-        }
-        // 4. SLA: Atrasado/Hoje > Amanhã > FIFO
-        const pa = palletOrder[a.prazoMin] ?? 4;
-        const pb = palletOrder[b.prazoMin] ?? 4;
-        return pa - pb;
-      });
+      // ── 5. Ordenar pallets conforme Tipo de Execução ──────────────
+      //
+      // MODO FIFO / CRITICIDADE (execType === 'criticidade'):
+      //   Ordena EXCLUSIVAMENTE por dt_prev crescente.
+      //   Pallet com data 13/03 SEMPRE vem antes de 15/03 e 16/03.
+      //   isCrit e isAgend NÃO influenciam a posição — a data é soberana.
+      //   Isso garante que os embarques mais antigos sejam priorizados
+      //   conforme o critério "Data de Embarque" selecionado pelo usuário.
+      //
+      // MODO IDEAL (execType === 'ideal'):
+      //   1. Clientes Críticos
+      //   2. Agendamentos
+      //   3. FIFO por dt_entrega (apenas quando tipo = Entrega)
+      //   4. Prazo (Atrasado → Hoje → Amanhã → No Prazo → Sem Data)
+      //   5. Desempate FIFO por dt_prev mais antigo
+      //
+      if (modoFifo) {
+        // ── CRITICIDADE: ordem pura por dt_prev ──────────────────────
+        pallets.sort((a, b) => {
+          const diff = (a.dtPrevMin ?? Infinity) - (b.dtPrevMin ?? Infinity);
+          if (diff !== 0) return diff;
+          // Desempate secundário: prazo mais urgente
+          return (prazoOrder[a.prazoMin] ?? 4) - (prazoOrder[b.prazoMin] ?? 4);
+        });
+      } else {
+        // ── IDEAL: hierarquia completa ────────────────────────────────
+        pallets.sort((a, b) => {
+          if (a.isCrit  !== b.isCrit)  return a.isCrit  ? -1 : 1;
+          if (a.isAgend !== b.isAgend) return a.isAgend ? -1 : 1;
+          if (tipoSel.includes('Entrega')) {
+            const tA = a.rows.reduce((mn, r) => Math.min(mn, parseSortDate(r.dt_entrega)), Infinity);
+            const tB = b.rows.reduce((mn, r) => Math.min(mn, parseSortDate(r.dt_entrega)), Infinity);
+            if (tA !== tB) return tA - tB;
+          }
+          const pa = prazoOrder[a.prazoMin] ?? 4;
+          const pb = prazoOrder[b.prazoMin] ?? 4;
+          if (pa !== pb) return pa - pb;
+          return (a.dtPrevMin ?? Infinity) - (b.dtPrevMin ?? Infinity);
+        });
+      }
 
-      // ── 5. Alocar pallets — NUNCA quebrar um pallet para ajustar peso ──
+      console.log('[PLAN] Pallets ordenados (top 5):', pallets.slice(0, 5).map(p => ({
+        dtPrevMin: new Date(p.dtPrevMin).toLocaleDateString('pt-BR'),
+        prazoMin: p.prazoMin, peso: p.peso, isCrit: p.isCrit, isAgend: p.isAgend
+      })));
+
+      // ── 6. Alocar pallets — ATÔMICOS, nunca quebrar ───────────────
+      // Processa na ordem definida acima. O primeiro pallet que não couber
+      // é rejeitado inteiro; continua tentando os seguintes (pode haver
+      // pallets menores que caibam no espaço residual).
       let cP = 0, cV = 0;
       const res = [];
       let palletSel = 0, palletNsel = 0;
@@ -3607,18 +3948,30 @@ function runPlan() {
         }
       });
 
-      // ── 6. Completar capacidade com Carga Solta (após todos os pallets) ──
-      const prazoOrd = r => ({ Atrasado: 0, Hoje: 1, 'Amanhã': 2, 'No Prazo': 3, 'Sem Data': 4 }[r.prazo] ?? 4);
-      solta.sort((a, b) => {
-        if (a.is_critico !== b.is_critico) return a.is_critico ? -1 : 1;
-        if (a.is_agend !== b.is_agend) return a.is_agend ? -1 : 1;
-        if (tipoSel.includes('Entrega')) {
-          const tA = parseSortDate(a.dt_entrega);
-          const tB = parseSortDate(b.dt_entrega);
-          if (tA !== tB) return tA - tB;
-        }
-        return prazoOrd(a) - prazoOrd(b);
-      });
+      // ── 7. Completar capacidade com Carga Solta ───────────────────
+      // Mesma lógica de ordenação do passo 5, aplicada ao nível de registro.
+      const prazoOrd = r => (prazoOrder[r.prazo] ?? 4);
+
+      if (modoFifo) {
+        solta.sort((a, b) => {
+          const diff = parseSortDate(a.dt_prev) - parseSortDate(b.dt_prev);
+          if (diff !== 0) return diff;
+          return prazoOrd(a) - prazoOrd(b);
+        });
+      } else {
+        solta.sort((a, b) => {
+          if (a.is_critico !== b.is_critico) return a.is_critico ? -1 : 1;
+          if (a.is_agend   !== b.is_agend)   return a.is_agend   ? -1 : 1;
+          if (tipoSel.includes('Entrega')) {
+            const tA = parseSortDate(a.dt_entrega);
+            const tB = parseSortDate(b.dt_entrega);
+            if (tA !== tB) return tA - tB;
+          }
+          const po = prazoOrd(a) - prazoOrd(b);
+          if (po !== 0) return po;
+          return parseSortDate(a.dt_prev) - parseSortDate(b.dt_prev);
+        });
+      }
 
       let rP = pesoMax - cP, rV = valorMax - cV;
       let soltaSel = 0, soltaNsel = 0;
@@ -3888,7 +4241,39 @@ function printReport(type) {
   if (type === 'estoque') { data = getEstData(); title = 'Relatório de Estoque'; }
   else if (type === 'atrasados') { data = getAtrData(); title = 'Relatório de Atrasados'; }
   else if (type === 'patio') { data = getPatData(); title = 'Relatório — Pátio'; }
-  else if (type === 'descarga') { data = DB.filter(r => r.status === 'DESCARGA').sort((a, b) => a.prio_num - b.prio_num); title = 'Fila de Descarga'; }
+  else if (type === 'descarga') {
+    // Mapeia os cartoes visuais para um formato tabulável genérico
+    const groups = window._descGroups || [];
+    data = groups.map(g => {
+      const hasAtrasado = g.rows.some(r => r.prazo === 'Atrasado');
+      const hasHoje = g.rows.some(r => r.prazo === 'Hoje');
+      const hasAmanha = g.rows.some(r => r.prazo === 'Amanhã');
+
+      let prazoTag = ' No Prazo';
+      if (g.hasCrit || hasAtrasado) prazoTag = 'Atrasado';
+      else if (hasHoje) prazoTag = 'Hoje';
+      else if (g.hasAgend || hasAmanha) prazoTag = 'Amanhã'; // Agendado/Amanhã tratados no mesmo nivel de cor (amarelo/azul no pdf)
+
+      let attrs = [];
+      if (g.hasCrit) attrs.push('Crítico');
+      if (g.hasAgend) attrs.push('Agendado');
+      if (g.slaRaw < 1) attrs.push('Atraso/Hoje');
+
+      return {
+        veiculo: g.id.replace('||', ' · '),
+        prazo: prazoTag,
+        qtd: g.qtdCtes,
+        peso: fN2(g.pesoTotal / 1000) + ' t',
+        valor: 'R$ ' + fM(g.valorTotal),
+        vol: fN(g.volTotal),
+        score: (g.score * 100).toFixed(0) + '%',
+        atributos: attrs.length ? attrs.join(', ') : 'Fila Normal',
+        is_critico: g.hasCrit,
+        is_agend: g.hasAgend
+      };
+    });
+    title = 'Fila de Descarga';
+  }
   else if (type === 'descarga_grupo') {
     // exportDescPDF passa rows e titulo diretamente via argumento extra
     data = arguments[1] || [];
@@ -3938,15 +4323,35 @@ function printReport(type) {
   // PDF (core): colunas e ordem conforme especificação
   const fields = corePdf
     ? ['dt_prev', 'risco', 'equipamento', 'dt_entrega', 'cidade', 'rota', 'ctrc', 'origem', 'destino', 'remetente', 'destinatario', 'status', 'prazo', 'p_oper', 'qtd_vol', 'vl_nf']
-    : ['ctrc', 'destinatario', 'cidade', 'origem', 'destino', 'p_oper', 'qtd_vol', 'vl_nf', 'prazo', 'status', 'risco', 'dias'];
+    : type === 'descarga'
+      ? ['veiculo', 'prazo', 'qtd', 'peso', 'valor', 'vol', 'score', 'atributos']
+      : ['ctrc', 'destinatario', 'cidade', 'origem', 'destino', 'p_oper', 'qtd_vol', 'vl_nf', 'prazo', 'status', 'risco', 'dias'];
 
   const labels = corePdf
     ? ['DT. PREV', 'RISCO', 'EQUIPAMENTO', 'DT ENTREGA', 'CIDADE', 'ROTA', 'CTRC', 'ORIGEM', 'DESTINO', 'REMETENTE', 'DESTINATARIO', 'STATUS', 'PRAZO', 'P_OPER', 'QTD_VOL', 'VL_NF']
-    : ['CTRC', 'DESTINATÁRIO', 'CIDADE', 'ORIG.', 'DEST.', 'PESO (kg)', 'VOL.', 'VALOR NF', 'PRAZO', 'STATUS', 'RISCO', 'DIAS'];
+    : type === 'descarga'
+      ? ['VEÍCULO / PLACA', 'STATUS / SLA', 'QTD CT-ES', 'PESO', 'VALOR NF', 'VOLUMES', 'SCORE', 'ATRIBUTOS']
+      : ['CTRC', 'DESTINATÁRIO', 'CIDADE', 'ORIG.', 'DEST.', 'PESO (kg)', 'VOL.', 'VALOR NF', 'PRAZO', 'STATUS', 'RISCO', 'DIAS'];
 
-  const totalPeso = data.reduce((s, r) => s + (r.p_oper || 0), 0);
-  const totalValor = data.reduce((s, r) => s + (r.vl_nf || 0), 0);
-  const totalVol = data.reduce((s, r) => s + (r.qtd_vol || 0), 0);
+  let totalPeso = 0;
+  let totalValor = 0;
+  let totalVol = 0;
+  let totalRegs = 0;
+
+  if (type === 'descarga') {
+    // data is an array of mapped groups
+    const rawGroups = window._descGroups || [];
+    totalPeso = rawGroups.reduce((s, g) => s + g.pesoTotal, 0);
+    totalValor = rawGroups.reduce((s, g) => s + g.valorTotal, 0);
+    totalVol = rawGroups.reduce((s, g) => s + g.volTotal, 0);
+    totalRegs = rawGroups.reduce((s, g) => s + g.qtdCtes, 0);
+  } else {
+    // data is an array of items (CT-es)
+    totalPeso = data.reduce((s, r) => s + (r.p_oper || 0), 0);
+    totalValor = data.reduce((s, r) => s + (r.vl_nf || 0), 0);
+    totalVol = data.reduce((s, r) => s + (r.qtd_vol || 0), 0);
+    totalRegs = data.length;
+  }
 
   const w = window.open('', '_blank');
   w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head>
@@ -3985,7 +4390,7 @@ function printReport(type) {
     .nx-footer span{color:#10a37f}
     @media print{.nx-footer{position:fixed;bottom:0}.page-break{page-break-before:always}}
   
-/* ═══════════════════════════════════════════════════════
+ /* ═══════════════════════════════════════════════════════
    NEXUS HUB v7 · UX Patch (Responsivo + Theming + Settings)
    v5.1 (single-file friendly)
    ═══════════════════════════════════════════════════════ */
@@ -4319,10 +4724,10 @@ body.no-fx .background-orbs{display:none !important}
   </div>
   <div class="rpt-title">
     <h2>${title.toUpperCase()}</h2>
-    <div class="meta">${data.length} registros · Filial: ${escHtml(FILIAL || '—')} · ${dt}${extra ? ' · ' + escHtml(extra) : ''} </div>
+    <div class="meta">${type === 'descarga' ? data.length + ' veículos' : totalRegs + ' registros'} · Filial: ${escHtml(FILIAL || '—')} · ${dt}${extra ? ' · ' + escHtml(extra) : ''} </div>
   </div>
   <div class="kpi-row">
-    <div class="kpi-box"><div class="kl">Total Registros</div><div class="kv">${fN(data.length)}</div></div>
+    <div class="kpi-box"><div class="kl">${type === 'descarga' ? 'Total CT-es' : 'Total Registros'}</div><div class="kv">${fN(totalRegs)}</div></div>
     <div class="kpi-box"><div class="kl">Peso Total (kg)</div><div class="kv">${fN2(totalPeso)}</div></div>
     <div class="kpi-box"><div class="kl">Valor NF Total</div><div class="kv">R$ ${fM(totalValor)}</div></div>
     <div class="kpi-box"><div class="kl">Volumes</div><div class="kv">${fN(totalVol)}</div></div>
@@ -4506,7 +4911,7 @@ function copyTele() {
   const rows = document.getElementById('teleRows')?.textContent || '—';
   const fil = document.getElementById('teleFil')?.textContent || '—';
   const ts = document.getElementById('teleTs')?.textContent || '—';
-  const txt = `NEXUS HUB v3 · Telemetria\nFilial: ${fil}\nDataset: ${rows}\nRefresh: ${ts}\nRenders: ${__tele.renders}\nWarnings: ${__tele.warnings}\nFiltros: ${__tele.filters.join(', ') || '—'}`;
+  const txt = `NEXUS HUB v3 · Telemetria\nFilial: ${fil} \nDataset: ${rows} \nRefresh: ${ts} \nRenders: ${__tele.renders} \nWarnings: ${__tele.warnings} \nFiltros: ${__tele.filters.join(', ') || '—'} `;
   navigator.clipboard?.writeText(txt).then(() => {
     toast('Telemetria copiada', 'Colado na área de transferência.');
   }).catch(() => {
@@ -4585,20 +4990,20 @@ function renderCP(q) {
   }
 
   if (!items.length) {
-    list.innerHTML = `<div class="cp-empty">Nenhum comando encontrado para "<strong>${sanitizeHTML(q)}</strong>"</div>`;
+    list.innerHTML = `< div class="cp-empty" > Nenhum comando encontrado para "<strong>${sanitizeHTML(q)}</strong>"</div > `;
     return;
   }
 
   // Build markup with keyboard active state
   const recentKeys = __cpHistory.slice(-5);
   list.innerHTML = items.map((c, i) => `
-    <div class="cp-item${i === __cpActive ? ' active' : ''}" data-i="${i}" data-key="${c.key}" role="option" aria-selected="${i === __cpActive}">
+  < div class="cp-item${i === __cpActive ? ' active' : ''}" data - i="${i}" data - key="${c.key}" role = "option" aria - selected="${i === __cpActive}" >
       <div class="cp-l">
         <div class="cp-a">${recentKeys.includes(c.key) ? '<span style="color:var(--em3);font-size:9px;margin-right:6px">RECENTE</span>' : ''}${c.name}</div>
         <div class="cp-b">${c.desc}</div>
       </div>
       <div class="cp-r"><span class="cp-tag">${c.tag}</span></div>
-    </div>
+    </div >
   `).join('');
 
   // Event delegation on list
