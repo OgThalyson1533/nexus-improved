@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProjectFlow V9 — Documentação Oficial</title>
+<style>
+:root{--ac:#3b6cdb;--ac-bg:#eef2ff;--bg:#fafaf8;--bg1:#f5f5f2;--bg2:#ededea;--tx:#1a1a18;--tx2:#4a4a46;--tx3:#8a8a84;--bd:#e4e4e0;--green:#1a9e5f;--green-bg:#ecfdf5;--red:#dc2626;--red-bg:#fef2f2;--yellow:#c48a0a;--font:system-ui,-apple-system,sans-serif;--mono:'Menlo','Consolas',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--tx);line-height:1.7}
+.hero{background:linear-gradient(135deg,#1a1a18 0%,#2a3a6a 60%,#1a2a4a 100%);color:#fff;padding:64px 40px 48px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 70% 50%,rgba(59,108,219,.3) 0%,transparent 60%)}
+.hero-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);margin-bottom:20px}
+.hero-title{font-size:42px;font-weight:900;letter-spacing:-1px;line-height:1.1;margin-bottom:14px}
+.hero-title span{color:#7da4f8}
+.hero-sub{font-size:17px;color:rgba(255,255,255,.7);max-width:600px;line-height:1.6;margin-bottom:30px}
+.hero-pills{display:flex;gap:10px;flex-wrap:wrap}
+.pill{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.9)}
+.container{max-width:1060px;margin:0 auto;padding:0 32px}
+.toc{background:var(--bg1);border-bottom:1px solid var(--bd);padding:0 32px;position:sticky;top:0;z-index:100;display:flex;gap:0;overflow-x:auto}
+.toc a{display:block;padding:14px 16px;font-size:13px;font-weight:600;color:var(--tx3);white-space:nowrap;border-bottom:2px solid transparent;text-decoration:none;transition:all .15s}
+.toc a:hover,.toc a.active{color:var(--ac);border-bottom-color:var(--ac)}
+.sec{padding:60px 0;border-bottom:1px solid var(--bd)}
+.sec:last-child{border:none}
+.sec-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:var(--ac-bg);color:var(--ac);margin-bottom:12px}
+.sec-title{font-size:28px;font-weight:800;letter-spacing:-.5px;color:var(--tx);margin-bottom:10px}
+.sec-sub{font-size:15px;color:var(--tx3);line-height:1.6;max-width:720px;margin-bottom:32px}
+h3{font-size:18px;font-weight:700;color:var(--tx);margin:28px 0 10px}
+p{font-size:14px;color:var(--tx2);line-height:1.75;margin-bottom:14px}
+ul,ol{padding-left:20px;margin-bottom:16px}
+li{font-size:14px;color:var(--tx2);line-height:1.7;margin-bottom:5px}
+strong{color:var(--tx);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin:24px 0}
+.card{background:var(--bg1);border:1.5px solid var(--bd);border-radius:14px;padding:22px;transition:box-shadow .15s}
+.card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08)}
+.card-icon{font-size:28px;margin-bottom:12px}
+.card-title{font-size:15px;font-weight:700;color:var(--tx);margin-bottom:8px}
+.card-body{font-size:13px;color:var(--tx3);line-height:1.6}
+.arch{background:var(--bg1);border:1.5px solid var(--bd);border-radius:14px;padding:28px;margin:24px 0}
+.arch-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.n{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap}
+.n-ui{background:var(--ac-bg);color:var(--ac);border:1.5px solid var(--ac)}
+.n-lib{background:#fef3c7;color:#92400e;border:1.5px solid #d97706}
+.n-db{background:var(--green-bg);color:var(--green);border:1.5px solid var(--green)}
+.n-supa{background:#e0fdf4;color:#065f46;border:1.5px solid #059669}
+.arrow{color:var(--tx3);font-size:18px}
+code{font-family:var(--mono);font-size:12.5px;background:var(--bg2);padding:2px 7px;border-radius:5px;color:#c2410c}
+pre{background:#1a1a18;color:#e4e4e0;border-radius:12px;padding:20px 24px;overflow-x:auto;font-size:13px;line-height:1.6;margin:16px 0}
+pre code{background:none;color:inherit;padding:0}
+.tw{overflow-x:auto;margin:20px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--bg2);padding:10px 14px;text-align:left;font-weight:700;border-bottom:2px solid var(--bd)}
+td{padding:9px 14px;border-bottom:1px solid var(--bd);color:var(--tx2);vertical-align:top}
+tr:hover td{background:var(--bg1)}
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.b-new{background:var(--green-bg);color:var(--green)}
+.b-rw{background:var(--ac-bg);color:var(--ac)}
+.callout{padding:16px 20px;border-radius:10px;margin:16px 0;display:flex;gap:12px}
+.ci{background:var(--ac-bg);border-left:3px solid var(--ac)}
+.cw{background:#fffbeb;border-left:3px solid var(--yellow)}
+.callout span{font-size:18px;flex-shrink:0}
+.callout p{margin:0;font-size:13.5px}
+footer{background:var(--tx);color:rgba(255,255,255,.6);padding:40px;text-align:center;font-size:13px}
+footer strong{color:#fff}
+@media(max-width:680px){.hero{padding:40px 20px 32px}.hero-title{font-size:28px}.container{padding:0 16px}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="container" style="position:relative">
+    <div class="hero-badge">Documentação Oficial · Versão 9.0</div>
+    <h1 class="hero-title">Project<span>Flow</span> V9</h1>
+    <p class="hero-sub">Sistema completo de gestão de projetos com IA, Kanban avançado, Editor de Diagramas profissional com Fabric.js, Dashboard global filtrado e Knowledge Base.</p>
+    <div class="hero-pills">
+      <span class="pill">🎨 Fabric.js 5.3</span>
+      <span class="pill">⚡ Supabase</span>
+      <span class="pill">✦ Claude AI</span>
+      <span class="pill">📊 Dashboard Global</span>
+      <span class="pill">🔄 Recorrências</span>
+      <span class="pill">✅ Toast V9</span>
+    </div>
+  </div>
+</div>
+
+<div class="toc">
+  <a href="#overview">Visão Geral</a>
+  <a href="#diagram">Editor Diagramas</a>
+  <a href="#dashboard">Dashboard</a>
+  <a href="#kanban">Kanban V9</a>
+  <a href="#wiki">Wiki & Doc IA</a>
+  <a href="#sql">SQL</a>
+  <a href="#install">Instalação</a>
+</div>
+
+<div class="container">
+
+<div class="sec" id="overview">
+  <div class="sec-badge">01 · Visão Geral</div>
+  <h2 class="sec-title">Melhorias no V9</h2>
+  <p class="sec-sub">A versão 9 reestrutura completamente todos os módulos com foco em rastreabilidade, estabilidade e experiência profissional.</p>
+  <div class="grid">
+    <div class="card"><div class="card-icon">🎨</div><div class="card-title">Editor de Diagramas</div><div class="card-body">SVG manual substituído por <strong>Fabric.js 5.3</strong>. Drag-and-drop fluido, undo/redo, exportação PNG/SVG, painel de propriedades em tempo real.</div></div>
+    <div class="card"><div class="card-icon">📊</div><div class="card-title">Dashboard Global</div><div class="card-body">Exibe <strong>todas as tarefas</strong> de todos os projetos com filtros avançados por data, projeto, status, responsável, cliente e prioridade. Exportação PDF.</div></div>
+    <div class="card"><div class="card-icon">🔄</div><div class="card-title">Kanban Avançado</div><div class="card-body">Novos campos (solicitante, área, cliente, pessoas-chave), <strong>checklist interativo</strong>, recorrências automáticas, filtros locais, exportação ZIP.</div></div>
+    <div class="card"><div class="card-icon">🔗</div><div class="card-title">Rastreabilidade Global</div><div class="card-body">Diagramas, Wiki e Doc IA exigem um <strong>Projeto vinculado</strong> antes de qualquer operação de criação ou salvamento.</div></div>
+    <div class="card"><div class="card-icon">✅</div><div class="card-title">Toast System V9</div><div class="card-body">Notificações empilháveis no canto inferior direito. Todas as ações exibem <strong>"Alteração salva com êxito"</strong>.</div></div>
+    <div class="card"><div class="card-icon">👤</div><div class="card-title">Gestão de Equipe</div><div class="card-body">Fluxo de <strong>cadastro de novos membros</strong> diretamente no Kanban. Campo responsável funcional com seleção dinâmica.</div></div>
+  </div>
+  <div class="callout ci">
+    <span>ℹ️</span>
+    <p><strong>Regra Global:</strong> Todas as alterações em Editor de Diagramas, Doc IA e Wiki são obrigatoriamente atreladas a um Projeto antes de serem salvas.</p>
+  </div>
+</div>
+
+<div class="sec" id="diagram">
+  <div class="sec-badge">02 · Editor de Diagramas</div>
+  <h2 class="sec-title">Fabric.js — Reestruturação Completa</h2>
+  <p class="sec-sub">O módulo foi reescrito usando <strong>Fabric.js 5.3.1</strong>, eliminando toda a matemática SVG manual e entregando experiência fluida similar ao Excalidraw.</p>
+
+  <h3>Arquitetura</h3>
+  <div class="arch">
+    <div class="arch-row">
+      <div class="n n-ui">interface HTML</div>
+      <span class="arrow">→</span>
+      <div class="n n-lib">Fabric.Canvas (5.3.1)</div>
+      <span class="arrow">→</span>
+      <div class="n n-db">localStorage</div>
+      <span class="arrow">+</span>
+      <div class="n n-supa">Supabase project_diagrams</div>
+    </div>
+    <div class="arch-row" style="margin-top:10px">
+      <div class="n n-ui">DiagramEngineV9.init(pid)</div>
+      <span class="arrow">→</span>
+      <div class="n n-lib">fabric.Group / IText / Line</div>
+      <span class="arrow">→</span>
+      <div class="n n-supa">content_json (engine: fabric-v9)</div>
+    </div>
+    <div class="arch-row" style="margin-top:10px">
+      <div class="n n-ui">DiagramViewManager</div>
+      <span class="arrow">→</span>
+      <div class="n n-lib">generateFromProject()</div>
+      <span class="arrow">→</span>
+      <div class="n n-db">tasks agrupadas por BPMN</div>
+    </div>
+  </div>
+
+  <h3>Funcionalidades Implementadas</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Recurso</th><th>Implementação</th><th>Atalho</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Seleção</strong></td><td>fabric.ActiveSelection — multi-select + box-select</td><td><code>V</code></td></tr>
+      <tr><td><strong>Nós (10 tipos)</strong></td><td>Drag da paleta ou clique; fabric.Group com shape + texto</td><td>Drag / Botão</td></tr>
+      <tr><td><strong>Texto livre</strong></td><td>fabric.IText com edição inline</td><td><code>T</code></td></tr>
+      <tr><td><strong>Linha</strong></td><td>fabric.Line via click-drag no canvas</td><td><code>L</code></td></tr>
+      <tr><td><strong>Seta</strong></td><td>fabric.Group (Line + Triangle) com ângulo calculado</td><td><code>A</code></td></tr>
+      <tr><td><strong>Drag objetos</strong></td><td>Fabric.js nativo com snap a grid 20px</td><td>Drag</td></tr>
+      <tr><td><strong>Zoom</strong></td><td>zoomToPoint() centrado no cursor</td><td>Scroll</td></tr>
+      <tr><td><strong>Propriedades</strong></td><td>Painel lateral: cor fundo, borda, opacidade, label</td><td>Clique</td></tr>
+      <tr><td><strong>Renomear</strong></td><td>Duplo clique → prompt modal</td><td>Dblclick</td></tr>
+      <tr><td><strong>Undo/Redo</strong></td><td>Pilha JSON (60 snapshots max)</td><td><code>Ctrl+Z/Y</code></td></tr>
+      <tr><td><strong>Salvar</strong></td><td>localStorage + Supabase project_diagrams</td><td><code>Ctrl+S</code></td></tr>
+      <tr><td><strong>Export PNG</strong></td><td>toDataURL() 2x resolução</td><td>Botão toolbar</td></tr>
+      <tr><td><strong>Export SVG</strong></td><td>toSVG() → Blob</td><td>Botão toolbar</td></tr>
+      <tr><td><strong>Auto Layout</strong></td><td>Grid automático + fitView()</td><td>Botão toolbar</td></tr>
+      <tr><td><strong>Gerar do Projeto</strong></td><td>Nós por fase BPMN das tasks ativas</td><td>Botão toolbar</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Tipos de Nós</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Tipo</th><th>Forma</th><th>Uso</th></tr></thead>
+    <tbody>
+      <tr><td><code>process</code></td><td>Retângulo arredondado (azul)</td><td>Processos, etapas de fluxo</td></tr>
+      <tr><td><code>decision</code></td><td>Losango (âmbar)</td><td>Decisões condicionais</td></tr>
+      <tr><td><code>database</code></td><td>Cilindro (verde)</td><td>Bancos de dados, repositórios</td></tr>
+      <tr><td><code>io</code></td><td>Paralelogramo (lilás)</td><td>Entrada/saída de dados</td></tr>
+      <tr><td><code>actor</code></td><td>Elipse (rosa)</td><td>Usuários, sistemas externos</td></tr>
+      <tr><td><code>start</code></td><td>Círculo verde</td><td>Início do fluxo</td></tr>
+      <tr><td><code>end</code></td><td>Círculo vermelho</td><td>Fim do fluxo</td></tr>
+      <tr><td><code>note</code></td><td>Retângulo amarelo</td><td>Anotações</td></tr>
+      <tr><td><code>cloud</code></td><td>Retângulo azul celeste</td><td>Serviços cloud, APIs</td></tr>
+      <tr><td><code>custom</code></td><td>Retângulo cinza</td><td>Uso genérico</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Persistência</h3>
+  <pre><code>-- content_json salvo em project_diagrams (V9)
+{
+  "canvas": { ...JSON Fabric.js com todos os objetos... },
+  "zoom": 1.2,
+  "vt": [1.2, 0, 0, 1.2, -80, -40],
+  "pid": "uuid-projeto",
+  "taskId": "uuid-tarefa-ou-null",
+  "savedAt": "2025-03-18T12:00:00.000Z"
+}</code></pre>
+</div>
+
+<div class="sec" id="dashboard">
+  <div class="sec-badge">03 · Dashboard</div>
+  <h2 class="sec-title">Visão Global — Todos os Projetos</h2>
+  <p class="sec-sub">O Dashboard V9 exibe todas as tarefas de todos os projetos simultaneamente, com 7 tipos de filtros e exportação PDF.</p>
+  <h3>Filtros disponíveis</h3>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+    <div class="card" style="padding:14px"><strong>Por Projeto</strong><br><span style="font-size:12px;color:var(--tx3)">Filtra por projeto ou exibe todos</span></div>
+    <div class="card" style="padding:14px"><strong>Por Status</strong><br><span style="font-size:12px;color:var(--tx3)">Ativas, BPMN específico ou todos</span></div>
+    <div class="card" style="padding:14px"><strong>Por Prioridade</strong><br><span style="font-size:12px;color:var(--tx3)">Crítica, Alta, Média, Baixa</span></div>
+    <div class="card" style="padding:14px"><strong>Por Responsável</strong><br><span style="font-size:12px;color:var(--tx3)">Membro da equipe</span></div>
+    <div class="card" style="padding:14px"><strong>Por Cliente</strong><br><span style="font-size:12px;color:var(--tx3)">Derivado do projeto vinculado</span></div>
+    <div class="card" style="padding:14px"><strong>Por Data</strong><br><span style="font-size:12px;color:var(--tx3)">Intervalo de data de entrega</span></div>
+  </div>
+  <h3>Exportação PDF</h3>
+  <p>Botão "Exportar PDF" abre janela de impressão com todos os dados filtrados, incluindo KPIs, gráficos de barras e tabela completa de tarefas. Suporta impressão direta ou salvar como PDF pelo browser.</p>
+</div>
+
+<div class="sec" id="kanban">
+  <div class="sec-badge">04 · Kanban V9</div>
+  <h2 class="sec-title">Kanban com Campos Avançados</h2>
+  <h3>Novos Campos nos Cards</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Campo</th><th>Coluna BD</th><th>Descrição</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Data da solicitação</td><td><code>request_date</code></td><td>Quando a tarefa foi gerada</td><td><span class="badge b-new">Novo V9</span></td></tr>
+      <tr><td>Solicitante</td><td><code>requester</code></td><td>Quem pediu a tarefa</td><td><span class="badge b-new">Novo V9</span></td></tr>
+      <tr><td>Área Solicitante</td><td><code>area</code></td><td>Departamento de origem</td><td><span class="badge b-new">Novo V9</span></td></tr>
+      <tr><td>Cliente</td><td><code>client_name</code></td><td>Cliente associado</td><td><span class="badge b-new">Novo V9</span></td></tr>
+      <tr><td>Pessoas-chave</td><td><code>key_people</code></td><td>Stakeholders adicionais</td><td><span class="badge b-new">Novo V9</span></td></tr>
+      <tr><td>Checklist</td><td><code>checklist</code> (JSONB)</td><td>Subtarefas interativas</td><td><span class="badge b-new">Novo V9</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Checklist Interativo</h3>
+  <ul>
+    <li>Adicionar itens via input + Enter ou botão <code>+</code></li>
+    <li>Checkbox com atualização visual e barra de progresso percentual</li>
+    <li>Excluir itens individualmente</li>
+    <li>Persistência em localStorage + Supabase (<code>checklist</code> JSONB)</li>
+  </ul>
+
+  <h3>Recorrências Automáticas</h3>
+  <p>Tarefas criadas automaticamente na coluna "Planejado" conforme frequência: todo dia, dia específico da semana, ou 2x por semana. Motor verifica configurações a cada boot.</p>
+
+  <h3>Exportação ZIP (Tarefas Concluídas)</h3>
+  <p>Cards concluídos exibem botão "Exportar .ZIP" que compila <code>manifest.json</code>, <code>documentacao.html</code>, <code>wiki.json</code> e pasta <code>anexos/</code>.</p>
+
+  <h3>Gestão de Equipe</h3>
+  <p>Modal para cadastrar novos membros (nome, email, função, cor de avatar). Membros ficam disponíveis no campo "Responsável" de todos os cards imediatamente.</p>
+</div>
+
+<div class="sec" id="wiki">
+  <div class="sec-badge">05 · Wiki & Doc IA</div>
+  <h2 class="sec-title">Knowledge Base e Documentação IA</h2>
+  <div class="callout cw">
+    <span>⚠️</span>
+    <p><strong>Rastreabilidade:</strong> Sem projeto selecionado, Wiki e Doc IA exibem tela de bloqueio com instrução clara. Todo conteúdo fica vinculado ao projeto ativo.</p>
+  </div>
+  <h3>Wiki — Melhorias V9</h3>
+  <ul>
+    <li>Barra de rastreabilidade com nome do projeto no topo</li>
+    <li>Toast "Alteração salva com êxito" em cada modificação de bloco</li>
+    <li>Nova coluna <code>linked_task</code> para vincular blocos a tarefas específicas</li>
+    <li>10 tipos de bloco: h1/h2/h3, paragraph, callout, toggle, divider, embed_task, database_view, table</li>
+  </ul>
+  <h3>Doc IA — Correções V9</h3>
+  <ul>
+    <li>Bloqueio com mensagem orientativa quando sem projeto</li>
+    <li>Coluna <code>linked_task</code> em <code>ai_doc_snapshots</code></li>
+    <li>Geração mantida via Claude API (proxy Supabase Edge Function)</li>
+  </ul>
+</div>
+
+<div class="sec" id="sql">
+  <div class="sec-badge">06 · SQL Migrations</div>
+  <h2 class="sec-title">Migrações do Banco de Dados</h2>
+  <p>O arquivo <code>sql/v9-migration.sql</code> é executado <strong>após</strong> o <code>producao.sql</code>. É idempotente — pode ser re-executado sem danos.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Migration</th><th>Ação</th><th>Objeto</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>ADD COLUMN × 6</td><td><code>tasks</code> — novos campos V9</td></tr>
+      <tr><td>2</td><td>UPDATE FUNCTION</td><td><code>handle_new_project()</code></td></tr>
+      <tr><td>3</td><td>CREATE TABLE</td><td><code>recurring_tasks_v9</code></td></tr>
+      <tr><td>4</td><td>ADD COLUMN × 2</td><td><code>project_diagrams</code> — engine, linked_task</td></tr>
+      <tr><td>5</td><td>ADD COLUMN × 2</td><td><code>knowledge_blocks</code> — linked_task, color</td></tr>
+      <tr><td>6</td><td>ADD COLUMN × 1</td><td><code>ai_doc_snapshots</code> — linked_task</td></tr>
+      <tr><td>7</td><td>CREATE INDEX × 7</td><td>Índices de performance</td></tr>
+      <tr><td>8</td><td>UPDATE FUNCTION</td><td><code>audit_task_changes()</code> + trigger</td></tr>
+      <tr><td>9</td><td>CREATE VIEW</td><td><code>v9_tasks_dashboard</code></td></tr>
+      <tr><td>10</td><td>CREATE FUNCTION</td><td><code>get_all_tasks_v9()</code></td></tr>
+    </tbody>
+  </table></div>
+</div>
+
+<div class="sec" id="install">
+  <div class="sec-badge">07 · Instalação</div>
+  <h2 class="sec-title">Como instalar</h2>
+  <h3>Estrutura de arquivos V9</h3>
+  <pre><code>projectflow-v9/
+├── index.html                  ← Entrada principal
+├── css/                        ← Estilos (inalterados)
+├── js/
+│   ├── board.js                ← Kanban base
+│   ├── knowledge-base.js       ← Wiki editor
+│   ├── ai-doc-engine.js        ← Doc IA
+│   ├── pf-producao.js          ← Patches V8
+│   ├── diagram-engine-v9.js    ★ NOVO: Fabric.js editor
+│   └── pf-v9-core.js           ★ NOVO: Toast, Dashboard, Kanban V9
+├── sql/
+│   ├── producao.sql            ← Schema base (rodar primeiro)
+│   └── v9-migration.sql        ★ NOVO: Migrações V9
+└── docs/
+    └── documentation.html      ← Este arquivo</code></pre>
+
+  <h3>Passos</h3>
+  <ol>
+    <li style="margin-bottom:10px">Criar projeto no <a href="https://supabase.com">supabase.com</a></li>
+    <li style="margin-bottom:10px">Executar <code>producao.sql</code> → depois <code>v9-migration.sql</code> no SQL Editor</li>
+    <li style="margin-bottom:10px">Servir a pasta localmente (Live Server, nginx, etc.)</li>
+    <li style="margin-bottom:10px">Clicar ⚙️ na tela de login → inserir URL e Anon Key do Supabase</li>
+    <li>Ou usar o botão "Demonstração" para testar sem banco</li>
+  </ol>
+
+  <div class="callout ci">
+    <span>🚀</span>
+    <p><strong>CDN:</strong> Fabric.js 5.3.1 carrega via cdnjs.cloudflare.com automaticamente. Zero dependências npm, zero build step — 100% vanilla JS.</p>
+  </div>
+</div>
+
+</div>
+
+<footer>
+  <strong>ProjectFlow V9</strong> · Documentação Oficial<br>
+  <span id="d"></span>
+  <script>document.getElementById('d').textContent='Gerado em '+new Date().toLocaleDateString('pt-BR',{year:'numeric',month:'long'})</script>
+</footer>
+
+<script>
+const secs=document.querySelectorAll('.sec[id]'),links=document.querySelectorAll('.toc a');
+new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting)links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+x.target.id))})},{rootMargin:'-20% 0px -60% 0px'}).observe && secs.forEach(s=>new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting)links.forEach(l=>l.classList.toggle('active',l.getAttribute('href')==='#'+x.target.id))})},{rootMargin:'-20% 0px -60% 0px'}).observe(s));
+</script>
+</body>
+</html>
