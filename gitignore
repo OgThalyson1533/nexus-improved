@@ -1,0 +1,12 @@
+# Nexus Hub .gitignore
+node_modules/
+.env
+.env.local
+.vscode/
+.idea/
+*.xlsm
+*.xlsx
+*.csv
+.DS_Store
+Thumbs.db
+nexus_debug_*.log
