@@ -1,0 +1,182 @@
+/* ── GrokFin Elite v6 · nav.css ──────────────────────────────────────────────
+   Navegação: sidebar rail (desktop) + bottom nav (mobile) + sidebar link.
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* ── Sidebar rail (desktop) ── */
+.nav-rail {
+  width: 6.5rem;
+  background: rgba(7,10,19,.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid rgba(255,255,255,.06);
+  box-shadow: 14px 0 45px rgba(0,0,0,.22);
+}
+
+.nav-rail-button {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  color: rgba(255,255,255,.56);
+  transition: transform .28s ease, color .28s ease;
+}
+
+.nav-rail-button:hover { transform: translateY(-1px); }
+
+.nav-rail-icon {
+  width: 3.25rem; height: 3.25rem;
+  border-radius: 1.35rem;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.045);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.03);
+  transition: all .28s ease;
+}
+
+.nav-rail-button:hover .nav-rail-icon,
+.nav-rail-button.active .nav-rail-icon {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(0,245,255,.22);
+  box-shadow: 0 0 0 1px rgba(0,245,255,.08), 0 16px 36px rgba(0,0,0,.28);
+}
+
+.nav-rail-button.active { color: #e6fdff; }
+.nav-rail-button.active i {
+  color: var(--brand);
+  text-shadow: 0 0 16px rgba(0,245,255,.32);
+}
+
+.nav-rail-tooltip {
+  position: absolute;
+  left: calc(100% + .95rem);
+  top: 50%;
+  transform: translateY(-50%) translateX(-8px);
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(9,12,21,.94);
+  padding: .45rem .8rem;
+  color: rgba(255,255,255,.84);
+  font-size: .75rem; font-weight: 700; letter-spacing: .04em;
+  opacity: 0; pointer-events: none;
+  transition: all .24s ease;
+  white-space: nowrap;
+  box-shadow: 0 14px 40px rgba(0,0,0,.25);
+}
+
+.nav-rail-button:hover .nav-rail-tooltip,
+.nav-rail-button:focus-visible .nav-rail-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* ── Install button (sidebar) ── */
+.install-icon-button {
+  width: 3.25rem; height: 3.25rem;
+  border-radius: 1.35rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.76);
+  transition: all .28s ease;
+}
+
+.install-icon-button:hover {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(0,245,255,.22);
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* ── Bottom nav (mobile) ── */
+.bottom-nav {
+  overflow-x: auto;
+  background: rgba(7,10,19,.92);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border-top: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 -18px 42px rgba(0,0,0,.28);
+  padding: .62rem 0 calc(.62rem + env(safe-area-inset-bottom));
+}
+
+.bottom-nav-button {
+  flex: 1 1 0;
+  display: flex; flex-direction: column; align-items: center;
+  gap: .32rem;
+  color: rgba(255,255,255,.54);
+  transition: color .26s ease, transform .26s ease;
+  font-size: .62rem; font-weight: 700; letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+.bottom-nav-button:hover { transform: translateY(-1px); }
+
+.bottom-nav-icon {
+  width: 2.72rem; height: 2.72rem;
+  border-radius: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid rgba(255,255,255,.07);
+  background: rgba(255,255,255,.045);
+  transition: all .26s ease;
+}
+
+.bottom-nav-button.active { color: #ecfeff; }
+.bottom-nav-button.active .bottom-nav-icon {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(0,245,255,.24);
+  box-shadow: 0 0 0 1px rgba(0,245,255,.08), 0 14px 30px rgba(0,0,0,.24);
+}
+
+.bottom-nav-button.active i {
+  color: var(--brand);
+  text-shadow: 0 0 16px rgba(0,245,255,.30);
+}
+
+/* ── Sidebar link (legacy mobile sidebar) ── */
+.sidebar-link {
+  transition: all .28s ease;
+  color: rgba(255,255,255,.68);
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0,245,255,.10), transparent 70%);
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+
+.sidebar-link:hover::after,
+.sidebar-link.active::after { opacity: 1; }
+
+.sidebar-link.active {
+  color: #d9feff;
+  background: rgba(255,255,255,.06);
+  box-shadow: inset 4px 0 0 var(--brand), 0 0 0 1px rgba(255,255,255,.04);
+}
+
+.sidebar-link.active i {
+  color: var(--brand);
+  text-shadow: 0 0 18px rgba(0,245,255,.35);
+}
+
+/* ── Mobile overlay ── */
+@media (max-width: 1023px) {
+  .mobile-overlay.show { display: block; }
+  .mobile-sidebar.open { transform: translateX(0); }
+  #toast-container {
+    bottom: 6.4rem;
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+  }
+}
+
+/* ── Mais sheet ── */
+#mais-sheet-panel { transition: transform .28s cubic-bezier(.32,0,.67,0); }
+.mais-tab-btn[data-tab].active {
+  border-color: rgba(0,245,255,.3) !important;
+  background: rgba(0,245,255,.08) !important;
+}

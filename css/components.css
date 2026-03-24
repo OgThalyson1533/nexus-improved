@@ -1,0 +1,127 @@
+/* ── GrokFin Elite v6 · components.css ─────────────────────────────────────
+   Pills, toasts, progress bars, status tones, payment badges,
+   surplus ring, insights, budget rows, profile inputs.
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* ── Pill ── */
+.pill {
+  display: inline-flex; align-items: center; gap: .5rem;
+  padding: .45rem .75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.05);
+  color: rgba(255,255,255,.78);
+  font-size: .75rem; font-weight: 600; letter-spacing: .03em;
+}
+
+/* ── Status tones ── */
+.status-up   { color: #5cf0b0; background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.18); }
+.status-down { color: #ff9ab1; background: rgba(244,63,94,.12);  border: 1px solid rgba(244,63,94,.18);  }
+.status-neutral { color: #9ac9ff; background: rgba(59,130,246,.12); border: 1px solid rgba(59,130,246,.18); }
+
+/* ── Semantic tones ── */
+.tone-success { background: rgba(16,185,129,.12);  color: #78f0be; border: 1px solid rgba(16,185,129,.18); }
+.tone-danger  { background: rgba(244,63,94,.12);   color: #ff9ab1; border: 1px solid rgba(244,63,94,.18);  }
+.tone-cyan    { background: rgba(0,245,255,.10);   color: #8ef9ff; border: 1px solid rgba(0,245,255,.16);  }
+.tone-amber   { background: rgba(250,204,21,.11);  color: #fde784; border: 1px solid rgba(250,204,21,.18); }
+.tone-violet  { background: rgba(168,85,247,.12);  color: #d6b0ff; border: 1px solid rgba(168,85,247,.18); }
+.tone-slate   { background: rgba(255,255,255,.06); color: rgba(255,255,255,.85); border: 1px solid rgba(255,255,255,.08); }
+
+/* ── Toast ── */
+.toast {
+  min-width: 280px; max-width: 420px;
+  transform: translateY(14px); opacity: 0;
+  transition: all .28s ease;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ── Progress bar ── */
+.progress-track {
+  height: 10px; width: 100%;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  overflow: hidden; position: relative;
+}
+
+.progress-fill {
+  height: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, var(--brand), var(--violet) 55%, var(--brand-2));
+  position: relative;
+}
+
+.progress-fill::after {
+  content: ''; position: absolute;
+  top: 0; right: 0; bottom: 0; width: 28px;
+  background: rgba(255,255,255,.34);
+  filter: blur(8px);
+}
+
+/* ── Section kicker ── */
+.section-kicker {
+  display: inline-flex; align-items: center; gap: .6rem;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.045);
+  border-radius: 999px;
+  padding: .55rem .85rem;
+  font-size: .75rem; font-weight: 700; color: rgba(255,255,255,.76);
+}
+
+/* ── Surplus gauge ── */
+.surplus-ring          { transform: rotate(-90deg); transform-origin: center; }
+.surplus-ring-track    { fill: none; stroke: rgba(255,255,255,.06); stroke-width: 10; }
+.surplus-ring-fill     { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset .6s ease; }
+
+/* ── Insight card colours ── */
+.insight-tip      { border-left: 3px solid rgba(0,245,255,.4);   background: rgba(0,245,255,.05); }
+.insight-alert    { border-left: 3px solid rgba(255,102,133,.4); background: rgba(255,102,133,.05); }
+.insight-positive { border-left: 3px solid rgba(0,255,133,.4);   background: rgba(0,255,133,.05); }
+
+/* ── Budget row ── */
+.budget-row input[type=range] { accent-color: #00f5ff; }
+
+/* ── Recurring badge ── */
+.recurring-badge { background: rgba(168,85,247,.15); border: 1px solid rgba(168,85,247,.25); color: #d6b0ff; }
+
+/* ── Payment badges ── */
+.payment-badge-card    { background: rgba(124,58,237,.15); border: 1px solid rgba(124,58,237,.25); color: #c4b5fd; }
+.payment-badge-pix     { background: rgba(0,245,255,.1);   border: 1px solid rgba(0,245,255,.2);   color: #67e8f9; }
+.payment-badge-dinheiro{ background: rgba(0,255,133,.1);   border: 1px solid rgba(0,255,133,.2);   color: #6ee7b7; }
+
+/* ── Profile inputs ── */
+.profile-input {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.05);
+  color: white;
+  padding: .95rem 1.05rem;
+  outline: none;
+  transition: border-color .26s ease, box-shadow .26s ease, background .26s ease;
+}
+
+.profile-input::placeholder { color: rgba(255,255,255,.30); }
+
+.profile-input:focus {
+  border-color: rgba(0,245,255,.30);
+  box-shadow: 0 0 0 4px rgba(0,245,255,.08);
+  background: rgba(255,255,255,.065);
+}
+
+/* ── Profile banner ── */
+.profile-banner {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.profile-banner::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(0,245,255,.12), transparent 40%, rgba(0,255,133,.10));
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* ── Cashflow / card selectors ── */
+#tx-card-selector-row  { flex-direction: column; }
+#tx-payment-section    { flex-direction: column; }
