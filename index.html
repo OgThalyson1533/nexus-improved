@@ -154,6 +154,8 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="js/filter-multiselect.js"></script>
   <script src="js/login.js"></script>
   
@@ -949,99 +951,120 @@
 
     </div>
 
-    <!-- SIDEBAR CLAUDE.AI STYLE -->
+    <!-- ═══════ SIDEBAR — Supabase-style + Expand on Hover ═══════ -->
     <aside class="sidebar" id="mainSidebar">
       <div class="sidebar-header">
-        <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleMainSidebar()"
-          title="Minimizar/Expandir (Ctrl+B)">☰</button>
         <div class="sidebar-brand">
           <div class="sidebar-logo">NX</div>
-          <div class="sidebar-title">NEXUS HUB</div>
+          <div class="sidebar-brand-name">NEXUS HUB</div>
         </div>
+        <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" aria-label="Alternar menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
       </div>
 
       <nav class="sidebar-nav">
-        <button type="button" class="nav-item active" data-page="dashboard" onclick="goPage('dashboard',this)"
-          title="Dashboard - Visão geral e métricas principais">
-          <span class="nav-icon">⬡</span>
-          <span class="nav-label">Dashboard</span>
-        </button>
-        <button type="button" class="nav-item" data-page="etapa" onclick="goPage('etapa',this)"
-          title="Etapa - Análise por etapas operacionais e riscos">
-          <span class="nav-icon">◴</span>
-          <span class="nav-label">Etapa</span>
-        </button>
-        <button type="button" class="nav-item" data-page="estoque" onclick="goPage('estoque',this)"
-          title="Estoque - Cargas disponíveis, em descarga e planejadas">
-          <span class="nav-icon">⬢</span>
-          <span class="nav-label">Estoque</span>
-          <span class="nb nb-g" id="nEst">—</span>
-        </button>
-        <button type="button" class="nav-item" data-page="descarga" onclick="goPage('descarga',this)"
-          title="Descarga - Fila de descarga e reembarque intermediário">
-          <span class="nav-icon">⬡</span>
-          <span class="nav-label">Descarga</span>
-          <span class="nb nb-o" id="nDesc">—</span>
-        </button>
-        <button type="button" class="nav-item" data-page="planejado" onclick="goPage('planejado',this)"
-          title="Planejado - Visão consolidada de veículos planejados">
-          <span class="nav-icon">⚡</span>
-          <span class="nav-label">Planejado</span>
-          <span class="nb nb-bb" id="nPlanj">—</span>
-        </button>
-        <button type="button" class="nav-item" data-page="patio" onclick="goPage('patio',this)"
-          title="Pátio - Veículos no pátio aguardando operação">
-          <span class="nav-icon">⬡</span>
-          <span class="nav-label">Pátio</span>
-          <span class="nb nb-b" id="nPat">—</span>
-        </button>
-        <button type="button" class="nav-item" data-page="planejamento" onclick="goPage('planejamento',this)"
-          title="Planejamento - Matriz de cargas e programação de viagens">
-          <span class="nav-icon">⚡</span>
-          <span class="nav-label">Planejamento</span>
-        </button>
-        <button type="button" class="nav-item" data-page="atrasados" onclick="goPage('atrasados',this)"
-          title="Atrasados - Cargas com SLA vencido e prioridades críticas">
-          <span class="nav-icon">⚠</span>
-          <span class="nav-label">Atrasados</span>
-          <span class="nb nb-r" id="nAtr">—</span>
-        </button>
-        <button type="button" class="nav-item" data-page="execucao-one" onclick="goPage('execucao-one',this)"
-          title="Execução One - Realizado vs Planejado (Base da Manhã)">
-          <span class="nav-icon">📊</span>
-          <span class="nav-label">Execução One</span>
-        </button>
+        <div class="sidebar-section">
+          <div class="sidebar-section-label">Operacional</div>
+          <button type="button" class="nav-item active" data-page="dashboard" onclick="goPage('dashboard',this)"
+            title="Dashboard">
+            <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span>
+            <span class="nav-label">Dashboard</span>
+          </button>
+          <button type="button" class="nav-item" data-page="etapa" onclick="goPage('etapa',this)"
+            title="Etapa">
+            <span class="nav-icon"><i data-lucide="git-branch"></i></span>
+            <span class="nav-label">Etapa</span>
+          </button>
+          <button type="button" class="nav-item" data-page="estoque" onclick="goPage('estoque',this)"
+            title="Estoque">
+            <span class="nav-icon"><i data-lucide="warehouse"></i></span>
+            <span class="nav-label">Estoque</span>
+            <span class="nb nb-g" id="nEst">—</span>
+          </button>
+          <button type="button" class="nav-item" data-page="descarga" onclick="goPage('descarga',this)"
+            title="Descarga">
+            <span class="nav-icon"><i data-lucide="truck"></i></span>
+            <span class="nav-label">Descarga</span>
+            <span class="nb nb-o" id="nDesc">—</span>
+          </button>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-label">Planejamento</div>
+          <button type="button" class="nav-item" data-page="planejado" onclick="goPage('planejado',this)"
+            title="Planejado">
+            <span class="nav-icon"><i data-lucide="clipboard-check"></i></span>
+            <span class="nav-label">Planejado</span>
+            <span class="nb nb-bb" id="nPlanj">—</span>
+          </button>
+          <button type="button" class="nav-item" data-page="patio" onclick="goPage('patio',this)"
+            title="Pátio">
+            <span class="nav-icon"><i data-lucide="parking-square"></i></span>
+            <span class="nav-label">Pátio</span>
+            <span class="nb nb-b" id="nPat">—</span>
+          </button>
+          <button type="button" class="nav-item" data-page="planejamento" onclick="goPage('planejamento',this)"
+            title="Planejamento">
+            <span class="nav-icon"><i data-lucide="calendar-range"></i></span>
+            <span class="nav-label">Planejamento</span>
+          </button>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-section-label">Análise</div>
+          <button type="button" class="nav-item" data-page="atrasados" onclick="goPage('atrasados',this)"
+            title="Atrasados">
+            <span class="nav-icon"><i data-lucide="alert-triangle"></i></span>
+            <span class="nav-label">Atrasados</span>
+            <span class="nb nb-r" id="nAtr">—</span>
+          </button>
+          <button type="button" class="nav-item" data-page="execucao-one" onclick="goPage('execucao-one',this)"
+            title="Execução One">
+            <span class="nav-icon"><i data-lucide="bar-chart-3"></i></span>
+            <span class="nav-label">Execução One</span>
+          </button>
+        </div>
       </nav>
 
-      <!-- ═ Bloco de Ferramentas ─ segunda seção da sidebar ═ -->
+      <!-- ═ Ferramentas ═ -->
       <div class="sidebar-divider"></div>
       <div class="sidebar-tools">
-        <div class="sidebar-tools-label">FERRAMENTAS</div>
+        <div class="sidebar-tools-label">Ferramentas</div>
         <button class="sidebar-tool-btn" onclick="toggleTele()" title="Telemetria (Ctrl+`)">
-          <span class="nav-icon">📡</span>
+          <span class="nav-icon"><i data-lucide="radio"></i></span>
           <span class="nav-label">Telemetria</span>
           <span class="kbd">Ctrl+`</span>
         </button>
         <button class="sidebar-tool-btn" onclick="openCP()" title="Comandos (Ctrl+K)">
-          <span class="nav-icon">⌨</span>
+          <span class="nav-icon"><i data-lucide="command"></i></span>
           <span class="nav-label">Comandos</span>
           <span class="kbd">Ctrl+K</span>
         </button>
         <button class="sidebar-tool-btn" id="settingsBtn2" onclick="openSettings()" title="Ajustes (Ctrl+,)">
-          <span class="nav-icon">⚙</span>
+          <span class="nav-icon"><i data-lucide="settings"></i></span>
           <span class="nav-label">Ajustes</span>
           <span class="kbd">Ctrl+,</span>
         </button>
-        <button class="sidebar-tool-btn" onclick="toggleTheme()" title="Alternar tema (Ctrl+L)" style="margin-top:4px">
-          <span class="nav-icon">&#127769;</span>
+        <button class="sidebar-tool-btn" onclick="toggleTheme()" title="Alternar tema (Ctrl+L)">
+          <span class="nav-icon"><i data-lucide="moon"></i></span>
           <span class="nav-label">Tema</span>
           <span class="kbd">Ctrl+L</span>
         </button>
-        <button class="sidebar-tool-btn" onclick="resetApp()" title="Nova importacao"
-          style="background:rgba(16,163,127,.15);border:1px solid rgba(16,163,127,.4);color:#10a37f;margin-top:8px;border-radius:8px">
-          <span class="nav-icon">&#10227;</span>
-          <span class="nav-label" style="font-weight:700">Nova Importacao</span>
+        <button class="sidebar-tool-btn sidebar-tool-btn--accent" onclick="resetApp()" title="Nova importação">
+          <span class="nav-icon"><i data-lucide="refresh-cw"></i></span>
+          <span class="nav-label">Nova Importação</span>
         </button>
+      </div>
+
+      <!-- ═ Footer ═ -->
+      <div class="sidebar-footer">
+        <div class="sidebar-status"><span class="dot"></span><span id="sbConn">CONEXÃO ESTÁVEL</span></div>
+        <div class="sidebar-hint">
+          <span class="kbd">Ctrl+B</span> sidebar · <span class="kbd">Ctrl+K</span> comandos
+        </div>
       </div>
     </aside>
     <div class="sidebar-overlay" onclick="toggleMainSidebar()"></div>
@@ -1445,6 +1468,7 @@
             <div id="estFilialSelect"></div>
             <div id="estDestSelect"></div>
             <div id="estPrazoSelect"></div>
+            <div id="estRemetSelect"></div>
             <!-- Date Range Slicers (Dropdown Fiel) -->
             <div id="nx-slicer-est-prev" style="margin-left:auto"></div>
             <div id="nx-slicer-est-entrega"></div>

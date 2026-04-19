@@ -705,6 +705,7 @@ function resetApp() {
 function populateSelects() {
   const estoques = [...new Set(DB.map(r => r.estoque).filter(v => v && v !== 'None'))].sort();
   const destinos = [...new Set(DB.map(r => r.destino).filter(v => v && v !== 'None'))].sort();
+  const remetentes = [...new Set(DB.map(r => r.remetente).filter(v => v && v !== 'None'))].sort();
 
   // ── Dashboard: Tipo de Operação ─────────────────────────
   const dashTipoEl = document.getElementById('dashTypeSelect');
@@ -795,6 +796,21 @@ function populateSelects() {
       allByDefault: true,
       onChange: () => { estPage = 1; renderEst(); }
     }, estPrazoEl);
+  }
+
+  // ── Estoque: Remetente ──────────────────────────────────
+  const estRemetEl = document.getElementById('estRemetSelect');
+  if (estRemetEl) {
+    if (!NxMS.has('estRemet')) {
+      nxMselCreate('estRemet', {
+        label: 'Remetente',
+        options: remetentes,
+        allByDefault: true,
+        onChange: () => { estPage = 1; renderEst(); }
+      }, estRemetEl);
+    } else {
+      populateMultiSel('estRemet', remetentes);
+    }
   }
 
   // ── Descarga: Tipo ──────────────────────────────────────
@@ -1123,21 +1139,55 @@ function toggleSidebar(force) {
   updateSidebarFab();
 }
 
-// NOVA FUNÇÃO: Toggle da sidebar principal Claude.ai style
-function toggleMainSidebar() {
+// NOVA FUNÇÃO: Toggle da sidebar principal — Expand on Hover
+function toggleMainSidebar(force) {
   const sidebar = document.getElementById('mainSidebar');
-  const app = document.getElementById('app');
-  if (!sidebar || !app) return;
+  if (!sidebar) return;
 
   if (window.innerWidth <= 768) {
-    // Mobile: abre/fecha
+    // Mobile: abre/fecha como drawer
     sidebar.classList.toggle('open');
   } else {
-    // Desktop: colapsa/expande
-    sidebar.classList.toggle('collapsed');
-    app.classList.toggle('sidebar-collapsed');
+    // Desktop: alterna collapse via body
+    const isCollapsed = typeof force === 'boolean'
+      ? force
+      : !document.body.classList.contains('sidebar-collapsed');
+    document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+    try { localStorage.setItem('nexus_sidebar_collapsed', isCollapsed ? '1' : '0'); } catch (_) {}
   }
 }
+
+// Inicializar estado da sidebar com base no localStorage
+(function initSidebarState() {
+  function setup() {
+    // Restaurar estado salvo
+    try {
+      const saved = localStorage.getItem('nexus_sidebar_collapsed');
+      if (saved === '1') {
+        document.body.classList.add('sidebar-collapsed');
+      }
+    } catch (_) {}
+
+    // Conectar botão de collapse
+    const btn = document.getElementById('sidebar-collapse-btn');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        toggleMainSidebar();
+      });
+    }
+
+    // Inicializar Lucide Icons na sidebar
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+      lucide.createIcons();
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup);
+  } else {
+    setup();
+  }
+})();
 
 // Atalho Ctrl+B para toggle da sidebar
 document.addEventListener('keydown', (e) => {
@@ -1154,6 +1204,9 @@ document.addEventListener('keydown', (e) => {
   // Esc closes sidebar (if open) and helps close modals gracefully
   if (e.key === 'Escape') {
     if (document.body.classList.contains('sb-open')) toggleSidebar(false);
+    // Mobile: fechar sidebar se aberta
+    const sidebar = document.getElementById('mainSidebar');
+    if (sidebar && sidebar.classList.contains('open')) sidebar.classList.remove('open');
     try {
       const mb = document.querySelector('.modal-bg.open');
       if (mb) { mb.classList.add('closing'); setTimeout(() => mb.classList.remove('closing'), 220); }
@@ -2398,10 +2451,11 @@ function getEstData() {
     d = d.filter(r => r.status === _estF);
   }
 
-  // Filial, Destino, Prazo: multi-select
+  // Filial, Destino, Prazo, Remetente: multi-select
   const fiSel = getMultiSel('estFilial');
   const deSel = getMultiSel('estDest');
   const prSel = getMultiSel('estPrazo');
+  const rmSel = getMultiSel('estRemet');
   const sr = (document.getElementById('estSrch')?.value || '').toLowerCase();
 
   if (fiSel.length) d = d.filter(r => fiSel.includes(r.estoque));
@@ -2410,6 +2464,7 @@ function getEstData() {
     window._estDrillRegion = ''; // limpa drilldown de região quando filtro manual
   }
   if (prSel.length) d = d.filter(r => prSel.includes(r.prazo));
+  if (rmSel.length) d = d.filter(r => rmSel.includes(r.remetente));
 
   const rg = (window._estDrillRegion || '');
   if (rg) d = d.filter(r => ((REGION_MAP[String(r.destino || '').toUpperCase()?.trim()] || 'Outros') === rg));
@@ -2596,11 +2651,20 @@ function openDetail(payload) {
 
 function renderEst() {
   const d = getEstData();
+  const pageData = d.slice((estPage - 1) * PS, (estPage) * PS);
 
-  // Atualiza header com totais filtrados
-  updateHeaderWithFilteredTotals(d, 'ESTOQUE');
+  // Calcula selecionados para totais e header
+  const selected = d.filter(r => r._est_print === true);
+  const hasSelection = selected.length > 0;
+
+  // Atualiza header: mostra totais dos selecionados se houver seleção
+  updateHeaderWithFilteredTotals(hasSelection ? selected : d, 'ESTOQUE');
+
+  const allChecked = pageData.length > 0 && pageData.every(r => r._est_print === true);
+  const toggleAllHtml = `<label class="switch dsc-pr-sw" title="Selecionar Todos" onclick="event.stopPropagation()"><input type="checkbox" id="estPrintAll" ${allChecked ? 'checked' : ''} onchange="toggleAllEstPrint(this)"><span class="slider"></span></label>`;
 
   const cols = [
+    { k: '_est_print', l: toggleAllHtml },
     { k: 'ctrc', l: 'ctrc' },
     { k: 'equipamento', l: 'Equipamento' },
     { k: 'dt_prev', l: 'DT. PREV' },
@@ -2619,8 +2683,9 @@ function renderEst() {
     { k: 'is_critico', l: 'is_critico' },
     { k: 'dias_estoque', l: 'Dias em estoque' },
   ];
-  const totals = calculateTotals(d, cols.map(c => c.k));
-  renderTbl('estHead', 'estBody', d.slice((estPage - 1) * PS, (estPage) * PS), cols, totals);
+  // Totais: usa selecionados se houver, senão todos os filtrados
+  const totals = calculateTotals(hasSelection ? selected : d, cols.map(c => c.k));
+  renderTbl('estHead', 'estBody', pageData, cols, totals);
   paginate('estPag', d.length, estPage, PS, p => { estPage = p; renderEst(); });
 }
 
@@ -2893,6 +2958,10 @@ function fc(k, v, r) {
     return `<span style="color:${col}">${escHtml(d)}</span>`;
   }
 
+  // Print flags: always render toggle even when undefined (default = unchecked)
+  if (k === '_est_print') return `<label class="switch dsc-pr-sw" title="Imprimir"><input type="checkbox" data-id="${escAttr(r.ctrc || '')}" ${v === true ? 'checked' : ''} onchange="toggleEstPrint(this, '${escAttr(r.ctrc || '')}')"><span class="slider"></span></label>`;
+  if (k === '_print_flag') return `<label class="switch dsc-pr-sw" title="Imprimir"><input type="checkbox" data-id="${escAttr(r.ctrc || '')}" ${v !== false ? 'checked' : ''} onchange="toggleDescPrint(this, '${escAttr(r.ctrc || '')}')"><span class="slider"></span></label>`;
+
   if (v === null || v === undefined || v === '' || v === 'None') return '<span style="color:var(--muted)">—</span>';
   switch (k) {
     case 'status': return bSt(v);
@@ -2906,7 +2975,6 @@ function fc(k, v, r) {
     case 'flag': return v === 1 ? '<span class="b bg">✓ SIM</span>' : '<span class="b br">✕ NÃO</span>';
     case 'is_critico': return v ? '<span class="b br">⚡ SIM</span>' : '<span style="color:var(--muted)">—</span>';
     case 'is_agend': return v ? '<span class="b bo">📅 SIM</span>' : '<span style="color:var(--muted)">—</span>';
-    case '_print_flag': return `<label class="switch dsc-pr-sw" title="Imprimir"><input type="checkbox" data-id="${escAttr(r.ctrc || '')}" ${v !== false ? 'checked' : ''} onchange="toggleDescPrint(this, '${escAttr(r.ctrc || '')}')"><span class="slider"></span></label>`;
     case 'equipamento': return v && v > 0 ? `<span style="color:var(--em2)">${escHtml(v)}</span>` : '<span style="color:var(--muted)">—</span>';
     case 'dias': return `<span style="color:${v < 0 ? 'var(--em4)' : v === 0 ? 'var(--em3)' : 'var(--muted2)'}">${escHtml(v)}</span>`;
     case 'dt_prev':
@@ -3005,6 +3073,26 @@ window.toggleAllDescPrint = function (el) {
     // Re-render detail table to visually update all rows instantly
     renderDescDetail(g.rows);
   }
+};
+
+// ── Estoque: Print toggles (page-aware, state persists on DB rows) ──
+window.toggleEstPrint = function (el, ctrc) {
+  DB.forEach(r => {
+    if (String(r.ctrc || r.cod || '') === String(ctrc)) r._est_print = el.checked;
+  });
+  renderEst();
+};
+
+window.toggleAllEstPrint = function (el) {
+  const d = getEstData();
+  const pageData = d.slice((estPage - 1) * PS, estPage * PS);
+  pageData.forEach(r => {
+    const ctrc = String(r.ctrc || r.cod || '');
+    DB.forEach(dbr => {
+      if (String(dbr.ctrc || dbr.cod || '') === ctrc) dbr._est_print = el.checked;
+    });
+  });
+  renderEst();
 };
 
 function bSt(v) { const m = { DISPONIVEL: 'bg', DESCARGA: 'bo', PLANEJADO: 'bb', 'NO PATIO': 'bm', INTERMEDIARIO: 'bw', 'PLAN. SIMULADO': 'bb' }; return `<span class="b ${m[v] || 'bm'}">${v}</span>`; }
@@ -4210,7 +4298,11 @@ function getPlanViewData() {
 // ═══════════════════════════════════════════════════════
 function exportTbl(type) {
   let d = [];
-  if (type === 'estoque') d = getEstData();
+  if (type === 'estoque') {
+    const allEst = getEstData();
+    const selEst = allEst.filter(r => r._est_print === true);
+    d = selEst.length > 0 ? selEst : allEst;
+  }
   else if (type === 'atrasados') d = getAtrData();
   else if (type === 'patio') d = getPatData();
   else if (type === 'descarga') d = DB.filter(r => r.status === 'DESCARGA').sort((a, b) => a.prio_num - b.prio_num);
@@ -4238,7 +4330,17 @@ function exportPlan() {
 function printReport(type) {
   let data = []; let title = ''; let extra = '';
   const dt = new Date().toLocaleString('pt-BR');
-  if (type === 'estoque') { data = getEstData(); title = 'Relatório de Estoque'; }
+  if (type === 'estoque') {
+    const allEst = getEstData();
+    const selEst = allEst.filter(r => r._est_print === true);
+    if (selEst.length > 0) {
+      data = selEst;
+      title = 'Relatório de Estoque (Selecionados)';
+    } else {
+      data = allEst;
+      title = 'Relatório de Estoque';
+    }
+  }
   else if (type === 'atrasados') { data = getAtrData(); title = 'Relatório de Atrasados'; }
   else if (type === 'patio') { data = getPatData(); title = 'Relatório — Pátio'; }
   else if (type === 'descarga') {
